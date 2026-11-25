@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=MMP Player
+GenericName=Multimedia Player
+GenericName[ro]=Player Multimedia
+Comment=Multimedia player powered by PyQt6 and libmpv (GPL-3.0)
+Comment[ro]=Player multimedia bazat pe PyQt6 și libmpv (GPL-3.0)
+Exec=mmp-player %U
+Icon=mmp-player
+Terminal=false
+Type=Application
+Categories=AudioVideo;Player;Video;
+MimeType=video/mp4;video/x-matroska;video/webm;video/avi;video/mpeg;audio/mpeg;audio/flac;audio/ogg;

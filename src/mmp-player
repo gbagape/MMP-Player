@@ -1,0 +1,1753 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# MMP Player (Multimedia Player)
+# Copyright (C) 2026 MMP Player Contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Acest program este software liber; îl puteți redistribui și/sau modifica
+# sub termenii Licenței Publice Generale GNU (GPL v3), publicată de Free Software Foundation.
+
+import sys, os, json, locale, subprocess, mpv
+from datetime import datetime
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
+    QPushButton, QSlider, QLabel, QFileDialog, QInputDialog, QFrame,
+    QListWidget, QDialog, QTabWidget, QFormLayout, QComboBox, QSpinBox,
+    QCheckBox, QDialogButtonBox, QStackedWidget, QToolBar, QMessageBox, QTextEdit, QTableWidget, QTableWidgetItem,
+    QFontComboBox, QGroupBox, QColorDialog, QStyle
+)
+from PyQt6.QtCore import Qt, QTimer, QSize, QLocale
+from PyQt6.QtGui import QAction, QIcon, QColor, QShortcut, QKeySequence, QPixmap
+from PyQt6.QtCore import Qt, QTimer, QSize, QLocale
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import QStyle
+
+CONFIG_FILE = os.path.expanduser("~/.config/mmp_player.json")
+
+SETARI_IMPLICITE = {
+    "limba": "auto",
+    "limba": "auto",
+    "tema": "light", "volum_implicit": 85, "memoreaza_pozitia": True,
+    "sub_custom": True, "sub_font": "Arial", "sub_marime": 40,
+    "sub_bold": False, "sub_italic": False,
+    "sub_culoare": "#FFFFFF", "sub_culoare_chenar": "#000000", "sub_culoare_umbra": "#000000",
+    "sub_stil_chenar": "contur", "sub_opacitate": 255, "sub_pozitie": 100,
+    "sub_ass_force": False, "sub_codare": "cp1250", "sub_auto": "all",
+    "folder_implicit": os.path.expanduser("~/Videos")
+}
+
+TRADUCERI = {
+    "ro": {
+        "grp_sub_auto": "Încărcare automată",
+        "sub_auto_fuzzy": "Toate subtitrările care conțin numele filmului",
+        "chk_sub_first": "Selectează prima subtitrare disponibilă",
+        "grp_sub_enc": "Codare",
+        "chk_sub_autodetect": "Autodetectare pentru limba:",
+        "chk_sub_screenshot": "Include subtitrarea în captura de ecran",
+        "chk_sub_use_ass": "Utilizează biblioteca ASS",
+        "btn_apply": "Aplică",
+        "btn_cancel": "Anulează",
+        "enc_iso16": "Sud-est european (ISO-8859-16)",
+        "enc_cp1250": "Europa Centrală / Română (CP1250)",
+        "enc_utf8": "Unicode (UTF-8)",
+        "enc_iso2": "Europa de Est (ISO-8859-2)",
+        "enc_cp1251": "Chirilic (CP1251)",
+        "enc_iso1": "Europa de Vest (ISO-8859-1)",
+        "grp_sub_auto": "Încărcare automată",
+        "sub_auto_fuzzy": "Toate subtitrările care conțin numele filmului",
+        "chk_sub_first": "Selectează prima subtitrare disponibilă",
+        "grp_sub_enc": "Codare",
+        "chk_sub_autodetect": "Autodetectare pentru limba:",
+        "chk_sub_screenshot": "Include subtitrarea în captura de ecran",
+        "chk_sub_use_ass": "Utilizează biblioteca ASS",
+        "btn_apply": "Aplică",
+        "btn_cancel": "Anulează",
+        "enc_iso16": "Sud-est european (ISO-8859-16)",
+        "enc_cp1250": "Europa Centrală / Română (CP1250)",
+        "enc_utf8": "Unicode (UTF-8)",
+        "enc_iso2": "Europa de Est (ISO-8859-2)",
+        "enc_cp1251": "Chirilic (CP1251)",
+        "enc_iso1": "Europa de Vest (ISO-8859-1)",
+        "m_lang": "🌐 Limbă / Language",
+        "lang_auto": "Automat (Sistem)",
+        "lang_ro": "Română",
+        "lang_en": "English",
+        "win_title": "Ecran Video - MMP Player",
+        "stream_title": "Stream URL - MMP Player",
+        "placeholder_video": "",
+        "dock_ctrl": "Control MMP Player",
+        "tb_tools": "Unelte MMP Player",
+        "console_title": "Consola Control",
+        "bs_no_file": "BS.Player - Niciun fișier",
+        "cl_open": "Deschide", "cl_play_pause": "Play/Pauză", "cl_stop": "Stop",
+        "cl_full": "Fullscreen", "cl_skin": "Skin", "cl_pref": "Preferințe",
+        "m_open": "Deschide",
+        "a_file": "📂 Fișier...", "a_dir": "📁 Director...", "a_playlist": "📜 Playlist...",
+        "a_url": "🌐 URL... (N)", "a_exit": "❌ Ieșire",
+        "m_play": "Redare",
+        "a_play": "▶️ Redare", "a_pause": "⏸ Pauză (Spațiu)", "a_stop": "⏹ Stop",
+        "a_fstep": "⏭ Pas cadru înainte (.)", "a_fbstep": "⏮ Pas cadru înapoi (,)",
+        "a_seek_m10": "⏪ -10 secunde", "a_seek_p10": "⏩ +10 secunde",
+        "a_seek_m60": "⏪ -1 minut", "a_seek_p60": "⏩ +1 minut",
+        "m_speed": "⚡ Viteză", "a_prev": "⏮ Anterior", "a_next": "⏭ Următor",
+        "m_video": "Video",
+        "a_full": "⛶ Ecran complet (F)", "m_aspect": "📐 Raport aspect", "aspect_auto": "Automat",
+        "m_rotate": "🔄 Rotire", "a_bright_p": "☀️ Luminozitate +", "a_bright_m": "🌙 Luminozitate -",
+        "a_shot": "📸 Captură de ecran (S)",
+        "m_audio": "Audio",
+        "a_load_audio": "🎵 Încarcă fișier audio extern...", "a_mute": "🔇 Mut (M)",
+        "a_vol_m": "🔉 Volum -", "a_vol_p": "🔊 Volum +",
+        "a_adelay_m": "⏱ Decalaj -0.1s", "a_adelay_p": "⏱ Decalaj +0.1s",
+        "m_sub": "Subtitrări",
+        "a_load_sub": "💬 Încarcă fișier subtitrare...", "a_toggle_sub": "👁 Afișează / Ascunde",
+        "a_sub_big": "🔠 Mărește fontul (+)", "a_sub_small": "🔡 Micșorează fontul (-)",
+        "a_sub_up": "⬆️ Mută sus (R)", "a_sub_down": "⬇️ Mută jos (T)",
+        "a_sdelay_m": "⏱ Decalaj -0.1s (Z)", "a_sdelay_p": "⏱ Decalaj +0.1s (X)",
+        "m_browse": "Răsfoire",
+        "a_toggle_console": "🎛 Arată / Ascunde Consola Plutitoare",
+        "m_options": "Opțiuni",
+        "m_skin": "🎨 Skin Consolă",
+        "skin_dark": "Dark Modern", "skin_blue": "Albastru Nocturn", "skin_light": "SMPlayer Clasic",
+        "a_prefs": "⚙️ Preferințe (Ctrl+P)...",
+        "m_help": "Ajutor",
+        "a_about": "⚠️ Despre MMP Player",
+        "tt_open": "Deschide fișier", "tt_dir": "Deschide folder", "tt_url": "Deschide URL",
+        "tt_shot": "Captură de ecran", "tt_full": "Ecran complet (F)", "tt_prev": "Anterior",
+        "tt_next": "Următor", "tt_sub": "Încarcă subtitrare", "tt_pref": "Preferințe (Ctrl+P)",
+        "dlg_url_title": "Deschide URL", "dlg_url_lbl": "Lipește link-ul video:",
+        "dlg_files_title": "Alege fișier(e)", "dlg_dir_title": "Alege folderul",
+        "dlg_sub_title": "Alege subtitrarea", "about_title": "Despre MMP Player",
+        "about_text": "MMP Player (Multimedia Player) v1.0\n\nPlayer multimedia bazat pe PyQt6 și libmpv.\nLicență: GNU General Public License v3.0 (GPL-3.0-or-later)\n\nAcest program este software liber și vine FĂRĂ NICIO GARANȚIE.",
+        "btn_license": "📜 Licență GPL v3",
+        "lic_win_title": "Licență GNU GPL v3 - MMP Player",
+        "osd_vol": "Volum: {vol}%", "osd_mute_on": "Mut: Pornit", "osd_mute_off": "Mut: Oprit",
+        "osd_seek": "Derulare: {pos} / {dur}",
+        "pref_title": "MMP Player - Preferințe",
+        "cat_gen": "⚙️  General", "cat_vid": "🎬  Video & Performanță", "cat_aud": "🔊  Audio",
+        "cat_sub": "💬  Subtitrări", "cat_skin": "🎨  Interfață & Skin", "cat_keys": "⌨️  Tastatură & Mouse",
+        "chk_mem": "Memorează poziția timpului pentru fiecare fișier",
+        "lbl_engine": "Motor multimedia:", "val_engine": "mpv (integrat)", "lbl_def_dir": "Folder implicit:",
+        "hw_auto": "Automat (Hardware GPU)", "hw_cpu": "Software (Procesor CPU)", "lbl_hw": "Decodare video:",
+        "lbl_start_vol": "Volum la pornire:",
+        "sub_auto_all": "Toate subtitrările disponibile",
+        "sub_auto_exact": "Potrivire exactă cu numele fișierului",
+        "sub_auto_no": "Dezactivat",
+        "lbl_sub_auto": "Încărcare automată:", "lbl_sub_enc": "Codare caractere (diacritice):",
+        "tab_sub_1": "Subtitrări",
+        "grp_sub_auto": "Încărcare automată",
+        "lbl_sub_auto": "Încărcare automată fișiere subtitrări (*.srt, *.sub...):",
+        "sub_auto_fuzzy": "Toate subtitrările care conțin numele filmului",
+        "chk_sub_first": "Selectează prima subtitrare disponibilă",
+        "grp_sub_enc": "Codare",
+        "lbl_sub_enc": "Codificare implicită a subtitrărilor:",
+        "chk_sub_autodetect": "Autodetectare pentru limba:",
+        "chk_sub_screenshot": "Include subtitrarea în captura de ecran",
+        "chk_sub_use_ass": "Utilizează biblioteca ASS",
+        "btn_apply": "Aplică",
+        "btn_cancel": "Anulează",
+        "enc_iso16": "Sud-est european (ISO-8859-16)",
+        "enc_cp1250": "Europa Centrală / Română (CP1250)",
+        "enc_utf8": "Unicode (UTF-8)",
+        "enc_iso2": "Europa de Est (ISO-8859-2)",
+        "enc_cp1251": "Chirilic (CP1251)",
+        "enc_iso1": "Europa de Vest (ISO-8859-1)", "tab_sub_2": "Caractere și culori",
+        "chk_sub_custom": "Folosește stil personalizat",
+        "grp_font": "Caractere", "lbl_size": "Dimensiune:", "chk_bold": "Aldine", "chk_italic": "Italice",
+        "grp_colors": "Culori", "lbl_col_text": "Text:", "lbl_col_border": "Chenar:", "lbl_col_shadow": "Umbră:",
+        "grp_align": "Aliniere și stil chenar", "lbl_vpos": "Poziție verticală (%):",
+        "lbl_bstyle": "Stil chenar:", "bstyle_outline": "Contur și umbră",
+        "bstyle_box": "Bandă opacă", "bstyle_none": "Fără chenar",
+        "lbl_opacity": "Opacitate:", "chk_ass": "Aplică stilul și la fișierele ASS",
+        "skin_opt_xine": "Xine Hi-Fi Deck (Consolă Separată)",
+        "skin_opt_winamp": "skin_opt_winamp",
+        "skin_opt_dark": "SMPlayer Dark Modern",
+        "Albastru Nocturn": "Albastru Nocturn",
+        "skin_opt_light": "SMPlayer Clasic (Luminos)",
+        "lbl_skin_sel": "Consolă / Skin:",
+        "tbl_key": "Scurtătură", "tbl_act": "Acțiune",
+        "dlg_color": "Alege culoarea"
+    },
+    "en": {
+        "grp_sub_auto": "Autoload",
+        "sub_auto_fuzzy": "All subtitles containing movie name",
+        "chk_sub_first": "Select first available subtitle",
+        "grp_sub_enc": "Encoding",
+        "chk_sub_autodetect": "Try to autodetect for this language:",
+        "chk_sub_screenshot": "Include subtitles in screenshots",
+        "chk_sub_use_ass": "Use ASS library",
+        "btn_apply": "Apply",
+        "btn_cancel": "Cancel",
+        "enc_iso16": "South-Eastern European (ISO-8859-16)",
+        "enc_cp1250": "Central European / Romanian (CP1250)",
+        "enc_utf8": "Unicode (UTF-8)",
+        "enc_iso2": "Eastern European (ISO-8859-2)",
+        "enc_cp1251": "Cyrillic (CP1251)",
+        "enc_iso1": "Western European (ISO-8859-1)",
+        "grp_sub_auto": "Autoload",
+        "sub_auto_fuzzy": "All subtitles containing movie name",
+        "chk_sub_first": "Select first available subtitle",
+        "grp_sub_enc": "Encoding",
+        "chk_sub_autodetect": "Try to autodetect for this language:",
+        "chk_sub_screenshot": "Include subtitles in screenshots",
+        "chk_sub_use_ass": "Use ASS library",
+        "btn_apply": "Apply",
+        "btn_cancel": "Cancel",
+        "enc_iso16": "South-Eastern European (ISO-8859-16)",
+        "enc_cp1250": "Central European / Romanian (CP1250)",
+        "enc_utf8": "Unicode (UTF-8)",
+        "enc_iso2": "Eastern European (ISO-8859-2)",
+        "enc_cp1251": "Cyrillic (CP1251)",
+        "enc_iso1": "Western European (ISO-8859-1)",
+        "m_lang": "🌐 Language / Limbă",
+        "lang_auto": "Auto (System)",
+        "lang_ro": "Română",
+        "lang_en": "English",
+        "win_title": "Video Screen - Personal Player",
+        "stream_title": "URL Stream - Personal Player",
+        "placeholder_video": "",
+        "dock_ctrl": "MMP Player Control",
+        "tb_tools": "MMP Player Tools",
+        "console_title": "Control Console",
+        "bs_no_file": "BS.Player - No file loaded",
+        "cl_open": "Open", "cl_play_pause": "Play/Pause", "cl_stop": "Stop",
+        "cl_full": "Fullscreen", "cl_skin": "Skin", "cl_pref": "Preferences",
+        "m_open": "Open",
+        "a_file": "📂 File...", "a_dir": "📁 Directory...", "a_playlist": "📜 Playlist...",
+        "a_url": "🌐 URL... (N)", "a_exit": "❌ Exit",
+        "m_play": "Play",
+        "a_play": "▶️ Play", "a_pause": "⏸ Pause (Space)", "a_stop": "⏹ Stop",
+        "a_fstep": "⏭ Frame step forward (.)", "a_fbstep": "⏮ Frame step backward (,)",
+        "a_seek_m10": "⏪ -10 seconds", "a_seek_p10": "⏩ +10 seconds",
+        "a_seek_m60": "⏪ -1 minute", "a_seek_p60": "⏩ +1 minute",
+        "m_speed": "⚡ Speed", "a_prev": "⏮ Previous", "a_next": "⏭ Next",
+        "m_video": "Video",
+        "a_full": "⛶ Fullscreen (F)", "m_aspect": "📐 Aspect ratio", "aspect_auto": "Auto",
+        "m_rotate": "🔄 Rotate", "a_bright_p": "☀️ Brightness +", "a_bright_m": "🌙 Brightness -",
+        "a_shot": "📸 Screenshot (S)",
+        "m_audio": "Audio",
+        "a_load_audio": "🎵 Load external audio file...", "a_mute": "🔇 Mute (M)",
+        "a_vol_m": "🔉 Volume -", "a_vol_p": "🔊 Volume +",
+        "a_adelay_m": "⏱ Delay -0.1s", "a_adelay_p": "⏱ Delay +0.1s",
+        "m_sub": "Subtitles",
+        "a_load_sub": "💬 Load subtitle file...", "a_toggle_sub": "👁 Show / Hide",
+        "a_sub_big": "🔠 Increase font size (+)", "a_sub_small": "🔡 Decrease font size (-)",
+        "a_sub_up": "⬆️ Move up (R)", "a_sub_down": "⬇️ Move down (T)",
+        "a_sdelay_m": "⏱ Delay -0.1s (Z)", "a_sdelay_p": "⏱ Delay +0.1s (X)",
+        "m_browse": "Browse",
+        "a_toggle_console": "🎛 Show / Hide Floating Console",
+        "m_options": "Options",
+        "m_skin": "🎨 Console Skin",
+        "skin_dark": "Dark Modern", "skin_blue": "Midnight Blue", "skin_light": "SMPlayer Classic",
+        "a_prefs": "⚙️ Preferences (Ctrl+P)...",
+        "m_help": "Help",
+        "a_about": "⚠️ About Personal Player",
+        "tt_open": "Open file", "tt_dir": "Open directory", "tt_url": "Open URL",
+        "tt_shot": "Screenshot", "tt_full": "Fullscreen (F)", "tt_prev": "Previous",
+        "tt_next": "Next", "tt_sub": "Load subtitle", "tt_pref": "Preferences (Ctrl+P)",
+        "dlg_url_title": "Open URL", "dlg_url_lbl": "Paste video link:",
+        "dlg_files_title": "Select file(s)", "dlg_dir_title": "Select directory",
+        "dlg_sub_title": "Select subtitle", "about_title": "About Personal Player",
+        "osd_vol": "Volume: {vol}%", "osd_mute_on": "Mute: On", "osd_mute_off": "Mute: Off",
+        "osd_seek": "Seek: {pos} / {dur}",
+        "pref_title": "Personal Player - Preferences",
+        "cat_gen": "⚙️  General", "cat_vid": "🎬  Video & Performance", "cat_aud": "🔊  Audio",
+        "cat_sub": "💬  Subtitles", "cat_skin": "🎨  Interface & Skin", "cat_keys": "⌨️  Keyboard & Mouse",
+        "chk_mem": "Remember playback position for each file",
+        "lbl_engine": "Multimedia engine:", "val_engine": "mpv (built-in)", "lbl_def_dir": "Default folder:",
+        "hw_auto": "Auto (Hardware GPU)", "hw_cpu": "Software (CPU)", "lbl_hw": "Video decoding:",
+        "lbl_start_vol": "Startup volume:",
+        "sub_auto_all": "All available subtitles",
+        "sub_auto_exact": "Exact match with filename",
+        "sub_auto_no": "Disabled",
+        "lbl_sub_auto": "Auto-load:", "lbl_sub_enc": "Character encoding:",
+        "tab_sub_1": "Subtitles",
+        "grp_sub_auto": "Autoload",
+        "lbl_sub_auto": "Autoload subtitle files (*.srt, *.sub...):",
+        "sub_auto_fuzzy": "All subtitles containing movie name",
+        "chk_sub_first": "Select first available subtitle",
+        "grp_sub_enc": "Encoding",
+        "lbl_sub_enc": "Default subtitle encoding:",
+        "chk_sub_autodetect": "Try to autodetect for this language:",
+        "chk_sub_screenshot": "Include subtitles in screenshots",
+        "chk_sub_use_ass": "Use ASS library",
+        "btn_apply": "Apply",
+        "btn_cancel": "Cancel",
+        "enc_iso16": "South-Eastern European (ISO-8859-16)",
+        "enc_cp1250": "Central European / Romanian (CP1250)",
+        "enc_utf8": "Unicode (UTF-8)",
+        "enc_iso2": "Eastern European (ISO-8859-2)",
+        "enc_cp1251": "Cyrillic (CP1251)",
+        "enc_iso1": "Western European (ISO-8859-1)", "tab_sub_2": "Font and colors",
+        "chk_sub_custom": "Use custom style",
+        "grp_font": "Font", "lbl_size": "Size:", "chk_bold": "Bold", "chk_italic": "Italic",
+        "grp_colors": "Colors", "lbl_col_text": "Text:", "lbl_col_border": "Border:", "lbl_col_shadow": "Shadow:",
+"grp_align": "Alignment and border style", "lbl_vpos": "Vertical position (%):",
+"lbl_bstyle": "Border style:", "bstyle_outline": "Outline and shadow",
+"bstyle_box": "Opaque box", "bstyle_none": "No border",
+"lbl_opacity": "Opacity:", "chk_ass": "Apply style to ASS files too",
+"skin_opt_xine": "Xine Hi-Fi Deck (Separate Console)",
+"skin_opt_winamp": "skin_opt_winamp",
+"skin_opt_dark": "SMPlayer Dark Modern",
+"Albastru Nocturn": "Midnight Blue",
+"skin_opt_light": "SMPlayer Classic (Light)",
+"lbl_skin_sel": "Console / Skin:",
+"tbl_key": "Shortcut", "tbl_act": "Action",
+"dlg_color": "Choose color"
+}
+}
+
+def obtine_limba_activa(setari):
+    limba = setari.get("limba", "auto")
+    if limba in ("ro", "en"):
+        return limba
+    return "ro" if QLocale.system().name().split("_")[0].lower() == "ro" else "en"
+
+TRADUCERI = {
+    "ro": {
+        "m_lang": "🌐 Limbă / Language",
+        "lang_auto": "Automat (Sistem)",
+        "lang_ro": "Română",
+        "lang_en": "English",
+        "win_title": "Ecran Video - MMP Player",
+        "stream_title": "Stream URL - MMP Player",
+        "placeholder_video": "",
+        "dock_ctrl": "Control MMP Player",
+        "tb_tools": "Unelte MMP Player",
+        "console_title": "Consola Control",
+        "bs_no_file": "BS.Player - Niciun fișier",
+        "cl_open": "Deschide", "cl_play_pause": "Play/Pauză", "cl_stop": "Stop",
+        "cl_full": "Fullscreen", "cl_skin": "Skin", "cl_pref": "Preferințe",
+        "m_open": "Deschide",
+        "a_file": "📂 Fișier...", "a_dir": "📁 Director...", "a_playlist": "📜 Playlist...",
+        "a_url": "🌐 URL... (N)", "a_exit": "❌ Ieșire",
+        "m_play": "Redare",
+        "a_play": "▶️ Redare", "a_pause": "⏸ Pauză (Spațiu)", "a_stop": "⏹ Stop",
+        "a_fstep": "⏭ Pas cadru înainte (.)", "a_fbstep": "⏮ Pas cadru înapoi (,)",
+        "a_seek_m10": "⏪ -10 secunde", "a_seek_p10": "⏩ +10 secunde",
+        "a_seek_m60": "⏪ -1 minut", "a_seek_p60": "⏩ +1 minut",
+        "m_speed": "⚡ Viteză", "a_prev": "⏮ Anterior", "a_next": "⏭ Următor",
+        "m_video": "Video",
+        "a_full": "⛶ Ecran complet (F)", "m_aspect": "📐 Raport aspect", "aspect_auto": "Automat",
+        "m_rotate": "🔄 Rotire", "a_bright_p": "☀️ Luminozitate +", "a_bright_m": "🌙 Luminozitate -",
+        "a_shot": "📸 Captură de ecran (S)",
+        "m_audio": "Audio",
+        "a_load_audio": "🎵 Încarcă fișier audio extern...", "a_mute": "🔇 Mut (M)",
+        "a_vol_m": "🔉 Volum -", "a_vol_p": "🔊 Volum +",
+        "a_adelay_m": "⏱ Decalaj -0.1s", "a_adelay_p": "⏱ Decalaj +0.1s",
+        "m_sub": "Subtitrări",
+        "a_load_sub": "💬 Încarcă fișier subtitrare...", "a_toggle_sub": "👁 Afișează / Ascunde",
+        "a_sub_big": "🔠 Mărește fontul (+)", "a_sub_small": "🔡 Micșorează fontul (-)",
+        "a_sub_up": "⬆️ Mută sus (R)", "a_sub_down": "⬇️ Mută jos (T)",
+        "a_sdelay_m": "⏱ Decalaj -0.1s (Z)", "a_sdelay_p": "⏱ Decalaj +0.1s (X)",
+        "m_browse": "Răsfoire",
+        "a_toggle_console": "🎛 Arată / Ascunde Consola Plutitoare",
+        "m_options": "Opțiuni",
+        "m_skin": "🎨 Skin Consolă",
+        "skin_dark": "Dark Modern", "skin_blue": "Albastru Nocturn", "skin_light": "SMPlayer Clasic",
+        "a_prefs": "⚙️ Preferințe (Ctrl+P)...",
+        "m_help": "Ajutor",
+        "a_about": "⚠️ Despre MMP Player",
+        "tt_open": "Deschide fișier", "tt_dir": "Deschide folder", "tt_url": "Deschide URL",
+        "tt_shot": "Captură de ecran", "tt_full": "Ecran complet (F)", "tt_prev": "Anterior",
+        "tt_next": "Următor", "tt_sub": "Încarcă subtitrare", "tt_pref": "Preferințe (Ctrl+P)",
+        "dlg_url_title": "tt_url", "dlg_url_lbl": "Lipește link-ul video:",
+        "dlg_files_title": "Alege fișier(e)", "dlg_dir_title": "Alege folderul",
+        "dlg_sub_title": "Alege subtitrarea", "about_title": "Despre MMP Player",
+        "osd_vol": "Volum: {vol}%", "osd_mute_on": "Mut: Pornit", "osd_mute_off": "Mut: Oprit",
+        "osd_seek": "Derulare: {pos} / {dur}",
+        "pref_title": "MMP Player - Preferințe",
+        "cat_gen": "⚙️  General", "cat_vid": "🎬  Video & Performanță", "cat_aud": "🔊  Audio",
+        "cat_sub": "💬  Subtitrări", "cat_skin": "🎨  Interfață & Skin", "cat_keys": "⌨️  Tastatură & Mouse",
+        "chk_mem": "Memorează poziția timpului pentru fiecare fișier",
+        "lbl_engine": "Motor multimedia:", "val_engine": "mpv (integrat)", "lbl_def_dir": "Folder implicit:",
+        "hw_auto": "Automat (Hardware GPU)", "hw_cpu": "Software (Procesor CPU)", "lbl_hw": "Decodare video:",
+        "lbl_start_vol": "Volum la pornire:",
+        "sub_auto_all": "Toate subtitrările disponibile",
+        "sub_auto_exact": "Potrivire exactă cu numele fișierului",
+        "sub_auto_no": "Dezactivat",
+        "lbl_sub_auto": "Încărcare automată:", "lbl_sub_enc": "Codare caractere (diacritice):",
+        "tab_sub_1": "Subtitrare", "tab_sub_2": "Caractere și culori",
+        "chk_sub_custom": "Folosește stil personalizat",
+        "grp_font": "Caractere", "lbl_size": "Dimensiune:", "chk_bold": "Aldine", "chk_italic": "Italice",
+        "grp_colors": "Culori", "lbl_col_text": "Text:", "lbl_col_border": "Chenar:", "lbl_col_shadow": "Umbră:",
+        "grp_align": "Aliniere și stil chenar", "lbl_vpos": "Poziție verticală (%):",
+        "lbl_bstyle": "Stil chenar:", "bstyle_outline": "Contur și umbră",
+        "bstyle_box": "Bandă opacă", "bstyle_none": "Fără chenar",
+        "lbl_opacity": "Opacitate:", "chk_ass": "Aplică stilul și la fișierele ASS",
+        "skin_opt_xine": "Xine Hi-Fi Deck (Consolă Separată)",
+        "skin_opt_winamp": "skin_opt_winamp",
+        "skin_opt_dark": "skin_opt_dark",
+        "Albastru Nocturn": "Albastru Nocturn",
+        "skin_opt_light": "SMPlayer Clasic (Luminos)",
+        "lbl_skin_sel": "Consolă / Skin:",
+        "tbl_key": "Scurtătură", "tbl_act": "Acțiune",
+        "dlg_color": "Choose color"
+    },
+    "en": {
+        "m_lang": "🌐 Language / Limbă",
+        "lang_auto": "Auto (System)",
+        "lang_ro": "Română",
+        "lang_en": "English",
+        "win_title": "Video Screen - Personal Player",
+        "stream_title": "URL Stream - Personal Player",
+        "placeholder_video": "",
+        "dock_ctrl": "MMP Player Control",
+        "tb_tools": "MMP Player Tools",
+        "console_title": "Control Console",
+        "bs_no_file": "BS.Player - No file loaded",
+        "cl_open": "Open", "cl_play_pause": "Play/Pause", "cl_stop": "Stop",
+        "cl_full": "Fullscreen", "cl_skin": "Skin", "cl_pref": "Preferences",
+        "m_open": "Open",
+        "a_file": "📂 File...", "a_dir": "📁 Directory...", "a_playlist": "📜 Playlist...",
+        "a_url": "🌐 URL... (N)", "a_exit": "❌ Exit",
+        "m_play": "Play",
+        "a_play": "▶️ Play", "a_pause": "⏸ Pause (Space)", "a_stop": "⏹ Stop",
+        "a_fstep": "⏭ Frame step forward (.)", "a_fbstep": "⏮ Frame step backward (,)",
+        "a_seek_m10": "⏪ -10 seconds", "a_seek_p10": "⏩ +10 seconds",
+        "a_seek_m60": "⏪ -1 minute", "a_seek_p60": "⏩ +1 minute",
+        "m_speed": "⚡ Speed", "a_prev": "⏮ Previous", "a_next": "⏭ Next",
+        "m_video": "Video",
+        "a_full": "⛶ Fullscreen (F)", "m_aspect": "📐 Aspect ratio", "aspect_auto": "Auto",
+        "m_rotate": "🔄 Rotate", "a_bright_p": "☀️ Brightness +", "a_bright_m": "🌙 Brightness -",
+        "a_shot": "📸 Screenshot (S)",
+        "m_audio": "Audio",
+        "a_load_audio": "🎵 Load external audio file...", "a_mute": "🔇 Mute (M)",
+        "a_vol_m": "🔉 Volume -", "a_vol_p": "🔊 Volume +",
+        "a_adelay_m": "⏱ Delay -0.1s", "a_adelay_p": "⏱ Delay +0.1s",
+        "m_sub": "Subtitles",
+        "a_load_sub": "💬 Load subtitle file...", "a_toggle_sub": "👁 Show / Hide",
+        "a_sub_big": "🔠 Increase font size (+)", "a_sub_small": "🔡 Decrease font size (-)",
+        "a_sub_up": "⬆️ Move up (R)", "a_sub_down": "⬇️ Move down (T)",
+        "a_sdelay_m": "⏱ Delay -0.1s (Z)", "a_sdelay_p": "⏱ Delay +0.1s (X)",
+        "m_browse": "Browse",
+        "a_toggle_console": "🎛 Show / Hide Floating Console",
+        "m_options": "Options",
+        "m_skin": "🎨 Console Skin",
+        "skin_dark": "skin_dark", "skin_blue": "Midnight Blue", "skin_light": "SMPlayer Classic",
+        "a_prefs": "⚙️ Preferences (Ctrl+P)...",
+        "m_help": "Help",
+        "a_about": "⚠️ About Personal Player",
+        "tt_open": "Open file", "tt_dir": "Open directory", "tt_url": "Open URL",
+        "tt_shot": "Screenshot", "tt_full": "Fullscreen (F)", "tt_prev": "Previous",
+        "tt_next": "Next", "tt_sub": "Load subtitle", "tt_pref": "Preferences (Ctrl+P)",
+        "dlg_url_title": "Open URL", "dlg_url_lbl": "Paste video link:",
+        "dlg_files_title": "Select file(s)", "dlg_dir_title": "Select directory",
+        "dlg_sub_title": "Select subtitle", "about_title": "About Personal Player",
+        "osd_vol": "Volume: {vol}%", "osd_mute_on": "Mute: On", "osd_mute_off": "Mute: Off",
+        "osd_seek": "Seek: {pos} / {dur}",
+        "pref_title": "Personal Player - Preferences",
+        "cat_gen": "⚙️  General", "cat_vid": "🎬  Video & Performance", "cat_aud": "🔊  Audio",
+        "cat_sub": "💬  Subtitles", "cat_skin": "🎨  Interface & Skin", "cat_keys": "⌨️  Keyboard & Mouse",
+        "chk_mem": "Remember playback position for each file",
+        "lbl_engine": "Multimedia engine:", "val_engine": "mpv (built-in)", "lbl_def_dir": "Default folder:",
+        "hw_auto": "Auto (Hardware GPU)", "hw_cpu": "Software (CPU)", "lbl_hw": "Video decoding:",
+        "lbl_start_vol": "Startup volume:",
+        "sub_auto_all": "All available subtitles",
+        "sub_auto_exact": "Exact match with filename",
+        "sub_auto_no": "Disabled",
+        "lbl_sub_auto": "Auto-load:", "lbl_sub_enc": "Character encoding:",
+        "tab_sub_1": "Subtitle", "tab_sub_2": "Font and colors",
+        "chk_sub_custom": "Use custom style",
+        "grp_font": "Font", "lbl_size": "Size:", "chk_bold": "Bold", "chk_italic": "Italic",
+        "grp_colors": "Colors", "lbl_col_text": "Text:", "lbl_col_border": "Border:", "lbl_col_shadow": "Shadow:",
+"grp_align": "Alignment and border style", "lbl_vpos": "Vertical position (%):",
+"lbl_bstyle": "Border style:", "bstyle_outline": "Outline and shadow",
+"bstyle_box": "Opaque box", "bstyle_none": "No border",
+"lbl_opacity": "Opacity:", "chk_ass": "Apply style to ASS files too",
+"skin_opt_xine": "Xine Hi-Fi Deck (Separate Console)",
+"skin_opt_winamp": "skin_opt_winamp",
+"skin_opt_dark": "skin_opt_dark",
+"Albastru Nocturn": "Midnight Blue",
+"skin_opt_light": "SMPlayer Classic (Light)",
+"lbl_skin_sel": "Console / Skin:",
+"tbl_key": "Shortcut", "tbl_act": "Action",
+"dlg_color": "Choose color"
+}
+}
+
+def obtine_limba_activa(setari):
+    limba = setari.get("limba", "auto")
+    if limba in ("ro", "en"):
+        return limba
+    return "ro" if QLocale.system().name().split("_")[0].lower() == "ro" else "en"
+
+
+TRADUCERI["ro"].update({
+    "grp_sub_auto": "Încărcare automată",
+    "sub_auto_fuzzy": "Toate subtitrările care conțin numele filmului",
+    "chk_sub_first": "Selectează prima subtitrare disponibilă",
+    "grp_sub_enc": "Codare",
+    "chk_sub_autodetect": "Autodetectare pentru limba:",
+    "chk_sub_screenshot": "Include subtitrarea în captura de ecran",
+    "chk_sub_use_ass": "Utilizează biblioteca ASS",
+    "btn_apply": "Aplică",
+    "btn_cancel": "Anulează",
+    "enc_iso16": "Sud-est european (ISO-8859-16)",
+    "enc_cp1250": "Europa Centrală / Română (CP1250)",
+    "enc_utf8": "Unicode (UTF-8)",
+    "enc_iso2": "Europa de Est (ISO-8859-2)",
+    "enc_cp1251": "Chirilic (CP1251)",
+    "enc_iso1": "Europa de Vest (ISO-8859-1)"
+})
+TRADUCERI["en"].update({
+    "grp_sub_auto": "Autoload",
+    "sub_auto_fuzzy": "All subtitles containing movie name",
+    "chk_sub_first": "Select first available subtitle",
+    "grp_sub_enc": "Encoding",
+    "chk_sub_autodetect": "Try to autodetect for this language:",
+    "chk_sub_screenshot": "Include subtitles in screenshots",
+    "chk_sub_use_ass": "Use ASS library",
+    "btn_apply": "Apply",
+    "btn_cancel": "Cancel",
+    "enc_iso16": "South-Eastern European (ISO-8859-16)",
+    "enc_cp1250": "Central European / Romanian (CP1250)",
+    "enc_utf8": "Unicode (UTF-8)",
+    "enc_iso2": "Eastern European (ISO-8859-2)",
+    "enc_cp1251": "Cyrillic (CP1251)",
+    "enc_iso1": "Western European (ISO-8859-1)"
+})
+
+
+TRADUCERI["ro"].update({
+    "enc_auto": "Autodetectare (auto)",
+    "enc_utf8": "Unicode (UTF-8)",
+    "enc_utf16": "Unicode (UTF-16)",
+    "enc_iso16": "Sud-est european / Română (ISO-8859-16)",
+    "enc_cp1250": "Europa Centrală / Română (CP1250)",
+    "enc_iso2": "Europa de Est (ISO-8859-2)",
+    "enc_iso1": "Europa de Vest (ISO-8859-1)",
+    "enc_iso15": "Europa de Vest cu Euro (ISO-8859-15)",
+    "enc_cp1252": "Europa de Vest Windows (CP1252)",
+    "enc_cp1251": "Chirilic Windows (CP1251)",
+    "enc_iso5": "Chirilic (ISO-8859-5)",
+    "enc_koi8r": "Rusă (KOI8-R)",
+    "enc_koi8u": "Ucraineană (KOI8-U)",
+    "enc_iso7": "Greacă (ISO-8859-7)",
+    "enc_cp1253": "Greacă Windows (CP1253)",
+    "enc_iso9": "Turcă (ISO-8859-9)",
+    "enc_cp1254": "Turcă Windows (CP1254)",
+    "enc_iso4": "Baltică (ISO-8859-4)",
+    "enc_iso13": "Baltică Rim (ISO-8859-13)",
+    "enc_cp1257": "Baltică Windows (CP1257)",
+    "enc_iso10": "Nordică (ISO-8859-10)",
+    "enc_iso6": "Arabă (ISO-8859-6)",
+    "enc_cp1256": "Arabă Windows (CP1256)",
+    "enc_iso8": "Ebraică (ISO-8859-8)",
+    "enc_cp1255": "Ebraică Windows (CP1255)",
+    "enc_sjis": "Japoneză (SHIFT-JIS)",
+    "enc_eucjp": "Japoneză (EUC-JP)",
+    "enc_euckr": "Coreeană (EUC-KR)",
+    "enc_cp949": "Coreeană Windows (CP949)",
+    "enc_gb2312": "Chineză Simplificată (GB2312)",
+    "enc_gb18030": "Chineză Simplificată (GB18030)",
+    "enc_big5": "Chineză Tradițională (BIG5)",
+    "enc_cp874": "Thailandeză (CP874)",
+    "enc_cp1258": "Vietnameză (CP1258)"
+})
+TRADUCERI["en"].update({
+    "enc_auto": "Autodetect (auto)",
+    "enc_utf8": "Unicode (UTF-8)",
+    "enc_utf16": "Unicode (UTF-16)",
+    "enc_iso16": "South-Eastern European / Romanian (ISO-8859-16)",
+    "enc_cp1250": "Central European / Romanian (CP1250)",
+    "enc_iso2": "Eastern European (ISO-8859-2)",
+    "enc_iso1": "Western European (ISO-8859-1)",
+    "enc_iso15": "Western European with Euro (ISO-8859-15)",
+    "enc_cp1252": "Western European Windows (CP1252)",
+    "enc_cp1251": "Cyrillic Windows (CP1251)",
+    "enc_iso5": "Cyrillic (ISO-8859-5)",
+    "enc_koi8r": "Russian (KOI8-R)",
+    "enc_koi8u": "Ukrainian (KOI8-U)",
+    "enc_iso7": "Greek (ISO-8859-7)",
+    "enc_cp1253": "Greek Windows (CP1253)",
+    "enc_iso9": "Turkish (ISO-8859-9)",
+    "enc_cp1254": "Turkish Windows (CP1254)",
+    "enc_iso4": "Baltic (ISO-8859-4)",
+    "enc_iso13": "Baltic Rim (ISO-8859-13)",
+    "enc_cp1257": "Baltic Windows (CP1257)",
+    "enc_iso10": "Nordic (ISO-8859-10)",
+    "enc_iso6": "Arabic (ISO-8859-6)",
+    "enc_cp1256": "Arabic Windows (CP1256)",
+    "enc_iso8": "Hebrew (ISO-8859-8)",
+    "enc_cp1255": "Hebrew Windows (CP1255)",
+    "enc_sjis": "Japanese (SHIFT-JIS)",
+    "enc_eucjp": "Japanese (EUC-JP)",
+    "enc_euckr": "Korean (EUC-KR)",
+    "enc_cp949": "Korean Windows (CP949)",
+    "enc_gb2312": "Simplified Chinese (GB2312)",
+    "enc_gb18030": "Simplified Chinese (GB18030)",
+    "enc_big5": "Traditional Chinese (BIG5)",
+    "enc_cp874": "Thai (CP874)",
+    "enc_cp1258": "Vietnamese (CP1258)"
+})
+
+
+def gaseste_iconita_mmp():
+    baza = os.path.dirname(os.path.abspath(__file__))
+    cai = (
+        os.path.join(baza, "..", "assets", "mmp-player.png"),
+        os.path.join(baza, "mmp-player.png"),
+        os.path.expanduser("~/.local/share/icons/hicolor/256x256/apps/mmp-player.png"),
+        "/usr/local/share/icons/hicolor/256x256/apps/mmp-player.png",
+        "/usr/share/icons/hicolor/256x256/apps/mmp-player.png",
+        "/usr/share/pixmaps/mmp-player.png",
+    )
+    for c in cai:
+        if os.path.isfile(c):
+            return QIcon(c)
+    return QIcon.fromTheme("mmp-player")
+
+class FereastraPreferinte(QDialog):
+    def __init__(self, parent, setari):
+        super().__init__(parent)
+        tr_p = lambda k: TRADUCERI.get(obtine_limba_activa(setari), TRADUCERI["en"]).get(k, k)
+        self.setWindowTitle(tr_p("pref_title"))
+        self.resize(660, 440)
+        self.setari = dict(setari)
+        self._lang = obtine_limba_activa(self.setari)
+        tr_p = lambda k: TRADUCERI.get(self._lang, TRADUCERI["en"]).get(k, k)
+        self.setStyleSheet("""
+            QDialog { background-color: #f5f6f8; color: #111111; }
+            QWidget { color: #111111; }
+            QListWidget { background-color: #ffffff; color: #111111; border: 1px solid #c0c0c0; border-radius: 3px; outline: none; }
+            QListWidget::item { padding: 7px 10px; color: #111111; }
+            QListWidget::item:selected { background-color: #3399ff; color: #ffffff; font-weight: bold; }
+            QListWidget::item:hover:!selected { background-color: #e8f1fb; }
+            QTabWidget::pane { border: 1px solid #c0c0c0; background-color: #f5f6f8; border-radius: 3px; }
+            QTabBar::tab { background-color: #dfe3e8; color: #222222; border: 1px solid #b8bec6; border-bottom: none; padding: 6px 14px; margin-right: 2px; border-top-left-radius: 4px; border-top-right-radius: 4px; }
+            QTabBar::tab:selected { background-color: #ffffff; color: #000000; font-weight: bold; }
+            QTabBar::tab:hover:!selected { background-color: #ebeff4; }
+            QGroupBox { font-weight: bold; color: #111111; border: 1px solid #c0c0c0; border-radius: 4px; margin-top: 10px; padding-top: 10px; background-color: #f5f6f8; }
+            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; color: #111111; }
+            QLabel, QCheckBox { color: #111111; spacing: 6px; background: transparent; }
+            QCheckBox::indicator { width: 15px; height: 15px; border: 1px solid #767676; border-radius: 2px; background-color: #ffffff; }
+            QCheckBox::indicator:checked { background-color: #3399ff; border: 1px solid #1a73e8; }
+            QComboBox, QSpinBox, QLineEdit { background-color: #ffffff; color: #111111; border: 1px solid #b0b6be; border-radius: 3px; padding: 4px 8px; selection-background-color: #3399ff; selection-color: #ffffff; }
+            QComboBox:hover, QSpinBox:hover { border: 1px solid #3399ff; }
+            QComboBox:disabled { background-color: #e9ecef; color: #777777; }
+            QComboBox QAbstractItemView { background-color: #ffffff; color: #111111; border: 1px solid #999999; selection-background-color: #3399ff; selection-color: #ffffff; outline: none; }
+            QPushButton { background-color: #e9ecef; color: #111111; border: 1px solid #adb5bd; border-radius: 4px; padding: 5px 14px; }
+            QPushButton:hover { background-color: #dce4ec; border: 1px solid #3399ff; }
+            QPushButton:pressed { background-color: #cfd8e3; }
+            QTableWidget { background-color: #ffffff; color: #111111; gridline-color: #d8dee4; border: 1px solid #c0c0c0; }
+            QHeaderView::section { background-color: #e2e6ea; color: #111111; border: 1px solid #c0c0c0; padding: 5px; font-weight: bold; }
+            QScrollBar:vertical { background: #eef0f3; width: 12px; margin: 0; }
+            QScrollBar::handle:vertical { background: #c1c7d0; min-height: 20px; border-radius: 4px; }
+            QScrollBar::handle:vertical:hover { background: #9aa2ae; }
+        """)
+
+        lay = QVBoxLayout(self)
+        corp = QHBoxLayout()
+
+        # Lista laterala din stanga exact ca in MMP Player Preferences
+        self.lista_cat = QListWidget()
+        self.lista_cat.setObjectName("lista_pref")
+        self.lista_cat.setFixedWidth(185)
+        for item_txt in (tr_p("cat_gen"), tr_p("cat_vid"), tr_p("cat_aud"), tr_p("cat_sub"), tr_p("cat_skin"), tr_p("cat_keys")):
+            self.lista_cat.addItem(item_txt)
+        corp.addWidget(self.lista_cat)
+
+        self.pagini = QStackedWidget()
+
+        # Pagina 0: General
+        p0 = QWidget()
+        f0 = QFormLayout(p0)
+        self.btn_folder = QPushButton(self.setari.get("folder_implicit", os.path.expanduser("~/Videos")))
+        self.btn_folder.clicked.connect(self.alege_folder)
+        self.chk_mem = QCheckBox(tr_p("chk_mem"))
+        self.chk_mem.setChecked(bool(self.setari.get("memoreaza_pozitia", True)))
+        f0.addRow(tr_p("lbl_engine"), QLabel(tr_p("val_engine")))
+        f0.addRow(tr_p("lbl_def_dir"), self.btn_folder)
+        f0.addRow("", self.chk_mem)
+        self.pagini.addWidget(p0)
+
+        # Pagina 1: Video
+        p1 = QWidget()
+        f1 = QFormLayout(p1)
+        self.combo_hw = QComboBox()
+        self.combo_hw.addItem(tr_p("hw_auto"), "auto")
+        self.combo_hw.addItem(tr_p("hw_cpu"), "no")
+        f1.addRow(tr_p("lbl_hw"), self.combo_hw)
+        self.pagini.addWidget(p1)
+
+        # Pagina 2: Audio
+        p2 = QWidget()
+        f2 = QFormLayout(p2)
+        self.spin_vol = QSpinBox()
+        self.spin_vol.setRange(0, 130)
+        self.spin_vol.setSuffix(" %")
+        self.spin_vol.setValue(int(self.setari.get("volum_implicit", 85)))
+        f2.addRow(tr_p("lbl_start_vol"), self.spin_vol)
+        self.pagini.addWidget(p2)
+
+        # Pagina 3: Subtitrari
+        p3 = QTabWidget()
+
+        tab_sub1 = QWidget()
+        v_sub1 = QVBoxLayout(tab_sub1)
+
+        # Grup 1: Incarcare automata
+        grp_auto = QGroupBox(tr_p("grp_sub_auto"))
+        v_auto = QVBoxLayout(grp_auto)
+        v_auto.addWidget(QLabel(tr_p("lbl_sub_auto")))
+        self.combo_sub_auto = QComboBox()
+        self.combo_sub_auto.addItem(tr_p("sub_auto_all"), "all")
+        self.combo_sub_auto.addItem(tr_p("sub_auto_fuzzy"), "fuzzy")
+        self.combo_sub_auto.addItem(tr_p("sub_auto_exact"), "exact")
+        self.combo_sub_auto.addItem(tr_p("sub_auto_no"), "no")
+        self.combo_sub_auto.setCurrentIndex(next((i for i in range(4) if self.combo_sub_auto.itemData(i) == self.setari.get("sub_auto", "all")), 0))
+        v_auto.addWidget(self.combo_sub_auto)
+
+        self.chk_sub_first = QCheckBox(tr_p("chk_sub_first"))
+        self.chk_sub_first.setChecked(bool(self.setari.get("sub_select_first", True)))
+        v_auto.addWidget(self.chk_sub_first)
+        v_sub1.addWidget(grp_auto)
+
+        # Grup 2: Codare
+        grp_enc = QGroupBox(tr_p("grp_sub_enc"))
+        g_enc = QGridLayout(grp_enc)
+        g_enc.addWidget(QLabel(tr_p("lbl_sub_enc")), 0, 0)
+        self.combo_sub_enc = QComboBox()
+        enc_items = (
+            (tr_p("enc_auto"), "auto"),
+            (tr_p("enc_iso16"), "iso-8859-16"),
+            (tr_p("enc_cp1250"), "cp1250"),
+            (tr_p("enc_utf8"), "utf-8"),
+            (tr_p("enc_utf16"), "utf-16"),
+            (tr_p("enc_iso2"), "iso-8859-2"),
+            (tr_p("enc_iso1"), "iso-8859-1"),
+            (tr_p("enc_iso15"), "iso-8859-15"),
+            (tr_p("enc_cp1252"), "cp1252"),
+            (tr_p("enc_cp1251"), "cp1251"),
+            (tr_p("enc_iso5"), "iso-8859-5"),
+            (tr_p("enc_koi8r"), "koi8-r"),
+            (tr_p("enc_koi8u"), "koi8-u"),
+            (tr_p("enc_iso7"), "iso-8859-7"),
+            (tr_p("enc_cp1253"), "cp1253"),
+            (tr_p("enc_iso9"), "iso-8859-9"),
+            (tr_p("enc_cp1254"), "cp1254"),
+            (tr_p("enc_iso4"), "iso-8859-4"),
+            (tr_p("enc_iso13"), "iso-8859-13"),
+            (tr_p("enc_cp1257"), "cp1257"),
+            (tr_p("enc_iso10"), "iso-8859-10"),
+            (tr_p("enc_iso6"), "iso-8859-6"),
+            (tr_p("enc_cp1256"), "cp1256"),
+            (tr_p("enc_iso8"), "iso-8859-8"),
+            (tr_p("enc_cp1255"), "cp1255"),
+            (tr_p("enc_sjis"), "shift-jis"),
+            (tr_p("enc_eucjp"), "euc-jp"),
+            (tr_p("enc_euckr"), "euc-kr"),
+            (tr_p("enc_cp949"), "cp949"),
+            (tr_p("enc_gb2312"), "gb2312"),
+            (tr_p("enc_gb18030"), "gb18030"),
+            (tr_p("enc_big5"), "big5"),
+            (tr_p("enc_cp874"), "cp874"),
+            (tr_p("enc_cp1258"), "cp1258"),
+            (tr_p("enc_iso16"), "iso-8859-16"),
+            (tr_p("enc_cp1250"), "cp1250"),
+            (tr_p("enc_utf8"), "utf-8"),
+            (tr_p("enc_iso2"), "iso-8859-2"),
+            (tr_p("enc_cp1251"), "cp1251"),
+            (tr_p("enc_iso1"), "iso-8859-1"),
+        )
+        for et_e, cod_e in enc_items:
+            self.combo_sub_enc.addItem(et_e, cod_e)
+        cur_enc = self.setari.get("sub_codare", "cp1250").lower()
+        self.combo_sub_enc.setCurrentIndex(next((i for i in range(len(enc_items)) if self.combo_sub_enc.itemData(i) == cur_enc), 2))
+        g_enc.addWidget(self.combo_sub_enc, 0, 1)
+
+        self.chk_sub_autodetect = QCheckBox(tr_p("chk_sub_autodetect"))
+        self.chk_sub_autodetect.setChecked(bool(self.setari.get("sub_autodetect", False)))
+        g_enc.addWidget(self.chk_sub_autodetect, 1, 0)
+
+        self.combo_sub_lang = QComboBox()
+        langs = (("Română (ro)", "ro,rum,ron"), ("English (en)", "en,eng"), ("Français (fr)", "fr,fre,fra"), ("Español (es)", "es,spa"), ("Deutsch (de)", "de,ger,deu"), ("Italiano (it)", "it,ita"))
+        for et_lg, cod_lg in langs:
+            self.combo_sub_lang.addItem(et_lg, cod_lg)
+        self.combo_sub_lang.setEnabled(self.chk_sub_autodetect.isChecked())
+        self.chk_sub_autodetect.toggled.connect(self.combo_sub_lang.setEnabled)
+        cur_lg = self.setari.get("sub_lang", "ro,rum,ron")
+        self.combo_sub_lang.setCurrentIndex(next((i for i in range(len(langs)) if self.combo_sub_lang.itemData(i) == cur_lg), 0))
+        g_enc.addWidget(self.combo_sub_lang, 1, 1)
+        v_sub1.addWidget(grp_enc)
+
+        # Optiuni inferioare
+        self.chk_sub_screenshot = QCheckBox(tr_p("chk_sub_screenshot"))
+        self.chk_sub_screenshot.setChecked(bool(self.setari.get("sub_screenshot", False)))
+        v_sub1.addWidget(self.chk_sub_screenshot)
+
+        self.chk_sub_use_ass = QCheckBox(tr_p("chk_sub_use_ass"))
+        self.chk_sub_use_ass.setChecked(bool(self.setari.get("sub_use_ass", True)))
+        v_sub1.addWidget(self.chk_sub_use_ass)
+        v_sub1.addStretch()
+
+        p3.addTab(tab_sub1, tr_p("tab_sub_1"))
+
+        # --- Tab 2: Caractere și culori ---
+        tab_sub2 = QWidget()
+        v_sub2 = QVBoxLayout(tab_sub2)
+
+        self.chk_sub_custom = QCheckBox(tr_p("chk_sub_custom"))
+        self.chk_sub_custom.setChecked(bool(self.setari.get("sub_custom", True)))
+        v_sub2.addWidget(self.chk_sub_custom)
+
+        # Zona mijloc: Caractere (stânga) + Culori (dreapta)
+        h_mid = QHBoxLayout()
+
+        grp_car = QGroupBox(tr_p("grp_font"))
+        g_car = QGridLayout(grp_car)
+        self.combo_sub_font = QFontComboBox()
+        self.combo_sub_font.setCurrentText(self.setari.get("sub_font", "Arial"))
+        g_car.addWidget(self.combo_sub_font, 0, 0, 1, 4)
+
+        g_car.addWidget(QLabel(tr_p("lbl_size")), 1, 0)
+        self.spin_sub_size = QSpinBox()
+        self.spin_sub_size.setRange(16, 100)
+        self.spin_sub_size.setValue(int(self.setari.get("sub_marime", 40)))
+        g_car.addWidget(self.spin_sub_size, 1, 1)
+
+        self.chk_sub_bold = QCheckBox(tr_p("chk_bold"))
+        self.chk_sub_bold.setChecked(bool(self.setari.get("sub_bold", False)))
+        self.chk_sub_italic = QCheckBox(tr_p("chk_italic"))
+        self.chk_sub_italic.setChecked(bool(self.setari.get("sub_italic", False)))
+        g_car.addWidget(self.chk_sub_bold, 1, 2)
+        g_car.addWidget(self.chk_sub_italic, 1, 3)
+        h_mid.addWidget(grp_car, stretch=2)
+
+        grp_col = QGroupBox(tr_p("grp_colors"))
+        f_col = QFormLayout(grp_col)
+        self._col_text = self.setari.get("sub_culoare", "#FFFFFF")
+        self._col_chenar = self.setari.get("sub_culoare_chenar", "#000000")
+        self._col_umbra = self.setari.get("sub_culoare_umbra", "#000000")
+
+        self.btn_col_text = QPushButton()
+        self.btn_col_chenar = QPushButton()
+        self.btn_col_umbra = QPushButton()
+        for btn, hex_c, attr in (
+            (self.btn_col_text, self._col_text, "_col_text"),
+            (self.btn_col_chenar, self._col_chenar, "_col_chenar"),
+            (self.btn_col_umbra, self._col_umbra, "_col_umbra")
+        ):
+            btn.setFixedSize(75, 22)
+            btn.setStyleSheet(f"background-color: {hex_c}; border: 1px solid #555;")
+            btn.clicked.connect(lambda _, b=btn, a=attr: self._alege_culoare(b, a))
+
+        f_col.addRow(tr_p("lbl_col_text"), self.btn_col_text)
+        f_col.addRow(tr_p("lbl_col_border"), self.btn_col_chenar)
+        f_col.addRow(tr_p("lbl_col_shadow"), self.btn_col_umbra)
+        h_mid.addWidget(grp_col, stretch=1)
+        v_sub2.addLayout(h_mid)
+
+        # Zona jos: Aliniere + Stil chenar + Opacity
+        grp_alin = QGroupBox(tr_p("grp_align"))
+        g_alin = QGridLayout(grp_alin)
+
+        g_alin.addWidget(QLabel(tr_p("lbl_vpos")), 0, 0)
+        self.spin_sub_pos = QSpinBox()
+        self.spin_sub_pos.setRange(10, 100)
+        self.spin_sub_pos.setValue(int(self.setari.get("sub_pozitie", 100)))
+        g_alin.addWidget(self.spin_sub_pos, 0, 1)
+
+        g_alin.addWidget(QLabel(tr_p("lbl_bstyle")), 1, 0)
+        self.combo_stil_chenar = QComboBox()
+        self.combo_stil_chenar.addItem(tr_p("bstyle_outline"), "contur")
+        self.combo_stil_chenar.addItem(tr_p("bstyle_box"), "banda")
+        self.combo_stil_chenar.addItem(tr_p("bstyle_none"), "fara")
+        self.combo_stil_chenar.setCurrentIndex(next((i for i in range(3) if self.combo_stil_chenar.itemData(i) == self.setari.get("sub_stil_chenar", "contur")), 0))
+        g_alin.addWidget(self.combo_stil_chenar, 1, 1)
+
+        g_alin.addWidget(QLabel(tr_p("lbl_opacity")), 1, 2)
+        self.slider_opac = QSlider(Qt.Orientation.Horizontal)
+        self.slider_opac.setRange(0, 255)
+        self.slider_opac.setValue(int(self.setari.get("sub_opacitate", 255)))
+        self.lbl_opac = QLabel(str(self.slider_opac.value()))
+        self.lbl_opac.setFixedWidth(28)
+        self.slider_opac.valueChanged.connect(lambda v: self.lbl_opac.setText(str(v)))
+        g_alin.addWidget(self.slider_opac, 1, 3)
+        g_alin.addWidget(self.lbl_opac, 1, 4)
+
+        v_sub2.addWidget(grp_alin)
+
+        self.chk_sub_ass = QCheckBox(tr_p("chk_ass"))
+        self.chk_sub_ass.setChecked(bool(self.setari.get("sub_ass_force", False)))
+        v_sub2.addWidget(self.chk_sub_ass)
+
+        p3.addTab(tab_sub2, tr_p("tab_sub_2"))
+        self.pagini.addWidget(p3)
+
+        # Pagina 4: Interfata & Skin
+        p4 = QWidget()
+        f4 = QFormLayout(p4)
+        self.combo_tema = QComboBox()
+        self.teme_map = (
+            (tr_p("skin_opt_dark"), "dark"),
+            (self.tr("skin_blue"), "blue"),
+            (tr_p("skin_opt_light"), "light")
+        )
+        for et, cod in self.teme_map:
+            self.combo_tema.addItem(et, cod)
+        self.combo_tema.setCurrentIndex(next((i for i, tm in enumerate(self.teme_map) if tm[1] == self.setari.get("tema")), 2))
+        self.combo_tema.currentIndexChanged.connect(lambda: parent.aplica_skin(self.combo_tema.currentData()))
+        f4.addRow(tr_p("lbl_skin_sel"), self.combo_tema)
+        self.pagini.addWidget(p4)
+
+        # Pagina 5: Tastatura & Mouse
+        p5 = QTableWidget(7, 2)
+        p5.setHorizontalHeaderLabels((tr_p("tbl_key"), tr_p("tbl_act")))
+        scurt = (("Spatiu", "Redare / Pauza"), ("F / Dublu-click", "Ecran complet"), ("+ / -", "Marime subtitrare"), ("R / T", "Muta subtitrarea sus / jos"), (". / ,", "Pas cadru inainte / inapoi"), ("Ctrl + P", "Preferinte"))
+        for r, (sc, ac) in enumerate(scurt):
+            p5.setItem(r, 0, QTableWidgetItem(sc))
+            p5.setItem(r, 1, QTableWidgetItem(ac))
+        p5.resizeColumnsToContents()
+        self.pagini.addWidget(p5)
+
+        self.lista_cat.currentRowChanged.connect(self.pagini.setCurrentIndex)
+        self.lista_cat.setCurrentRow(0)
+        corp.addWidget(self.pagini, stretch=1)
+        lay.addLayout(corp)
+
+        btns = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Apply | QDialogButtonBox.StandardButton.Cancel)
+        btn_apply = btns.button(QDialogButtonBox.StandardButton.Apply)
+        btn_cancel = btns.button(QDialogButtonBox.StandardButton.Cancel)
+        btn_apply.setText(tr_p("btn_apply"))
+        btn_cancel.setText(tr_p("btn_cancel"))
+        btn_apply.clicked.connect(self.aplica_doar)
+        btns.accepted.connect(self.salveaza)
+        btns.rejected.connect(self.reject)
+        lay.addWidget(btns)
+
+    def alege_folder(self):
+        f = QFileDialog.getExistingDirectory(self, "Folder", self.btn_folder.text())
+        if f: self.btn_folder.setText(f)
+
+    def _alege_culoare(self, btn, attr_name):
+        c = QColorDialog.getColor(QColor(getattr(self, attr_name)), self, TRADUCERI.get(self._lang, TRADUCERI["en"])["dlg_color"])
+        if c.isValid():
+            hex_c = c.name()
+            setattr(self, attr_name, hex_c)
+            btn.setStyleSheet(f"background-color: {hex_c}; border: 1px solid #555;")
+
+    def colecteaza_setari(self):
+        self.setari["tema"] = self.combo_tema.currentData()
+        self.setari["folder_implicit"] = self.btn_folder.text()
+        self.setari["sub_auto"] = self.combo_sub_auto.currentData()
+        self.setari["sub_select_first"] = self.chk_sub_first.isChecked()
+        self.setari["sub_codare"] = self.combo_sub_enc.currentData()
+        self.setari["sub_autodetect"] = self.chk_sub_autodetect.isChecked()
+        self.setari["sub_lang"] = self.combo_sub_lang.currentData()
+        self.setari["sub_screenshot"] = self.chk_sub_screenshot.isChecked()
+        self.setari["sub_use_ass"] = self.chk_sub_use_ass.isChecked()
+        self.setari["sub_custom"] = self.chk_sub_custom.isChecked()
+        self.setari["sub_font"] = self.combo_sub_font.currentText()
+        self.setari["sub_marime"] = self.spin_sub_size.value()
+        self.setari["sub_bold"] = self.chk_sub_bold.isChecked()
+        self.setari["sub_italic"] = self.chk_sub_italic.isChecked()
+        self.setari["sub_culoare"] = self._col_text
+        self.setari["sub_culoare_chenar"] = self._col_chenar
+        self.setari["sub_culoare_umbra"] = self._col_umbra
+        self.setari["sub_pozitie"] = self.spin_sub_pos.value()
+        self.setari["sub_stil_chenar"] = self.combo_stil_chenar.currentData()
+        self.setari["sub_opacitate"] = self.slider_opac.value()
+        self.setari["sub_ass_force"] = self.chk_sub_ass.isChecked()
+        self.setari["volum_implicit"] = self.spin_vol.value()
+        self.setari["memoreaza_pozitia"] = self.chk_mem.isChecked()
+
+    def aplica_doar(self):
+        self.colecteaza_setari()
+        p = self.parent()
+        if p and hasattr(p, "aplica_preferinte_live"):
+            p.aplica_preferinte_live(self.setari)
+
+    def salveaza(self):
+        self.aplica_doar()
+        self.accept()
+
+class ConsolaPlutitoare(QWidget):
+    def __init__(self, main_win):
+        super().__init__()
+        self.main = main_win
+        self.setWindowTitle("Consola Control")
+        self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self._drag_pos = None
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        self.stack = QStackedWidget()
+        lay.addWidget(self.stack)
+        self.build_clasic()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+
+    def mouseMoveEvent(self, event):
+        if self._drag_pos is not None and event.buttons() == Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self._drag_pos)
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+
+    def build_clasic(self):
+        self.w_clasic = QWidget()
+        self.w_clasic.setFixedSize(560, 110)
+        lay = QVBoxLayout(self.w_clasic)
+        lay.setContentsMargins(6, 6, 6, 6)
+        self.cl_box = QFrame()
+        self.cl_box.setObjectName("cl_box")
+        blay = QVBoxLayout(self.cl_box)
+        r1 = QHBoxLayout()
+        self.cl_timp = QLabel("00:00:00")
+        self.cl_seek = QSlider(Qt.Orientation.Horizontal)
+        self.cl_seek.setRange(0, 1000)
+        self.cl_seek.sliderMoved.connect(self.main.deruleaza)
+        self.cl_dur = QLabel("00:00:00")
+        r1.addWidget(self.cl_timp)
+        r1.addWidget(self.cl_seek)
+        r1.addWidget(self.cl_dur)
+        blay.addLayout(r1)
+        r2 = QHBoxLayout()
+        for et, fn in (("Deschide", self.main.deschide_fisiere), ("Play/Pauza", self.main.toggle_play), ("Stop", lambda: self.main.player.command("stop")), ("Fullscreen", self.main.toggle_fullscreen), ("Skin", self.main.schimba_skin_rapid), ("Preferinte", self.main.deschide_preferinte)):
+            b = QPushButton(et)
+            b.clicked.connect(fn)
+            r2.addWidget(b)
+        blay.addLayout(r2)
+        lay.addWidget(self.cl_box)
+        self.stack.addWidget(self.w_clasic)
+
+    def aplica_stil_clasic(self, mod):
+        stiluri = {
+            "dark": "QFrame#cl_box { background: #1e1e1e; border: 1px solid #3c3c3c; border-radius: 8px; } QLabel { color: #ccc; font-family: monospace; font-weight: bold; } QPushButton { background: #2d2d2d; color: #fff; border: 1px solid #444; padding: 4px 8px; border-radius: 4px; }",
+            "blue": "QFrame#cl_box { background: #0d1b2a; border: 1px solid #415a77; border-radius: 8px; } QLabel { color: #90e0ef; font-family: monospace; font-weight: bold; } QPushButton { background: #1b263b; color: #90e0ef; border: 1px solid #415a77; padding: 4px 8px; border-radius: 4px; }",
+            "light": "QFrame#cl_box { background: #f0f0f0; border: 1px solid #adadad; border-radius: 8px; } QLabel { color: #111; font-family: monospace; font-weight: bold; } QPushButton { background: #e1e1e1; color: #111; border: 1px solid #adadad; padding: 4px 8px; border-radius: 4px; }"
+        }
+        self.w_clasic.setStyleSheet(stiluri.get(mod, stiluri["dark"]))
+
+class PlayerPersonal(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        for w in self.findChildren((QPushButton, QSlider)):
+            w.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        sc_space = QShortcut(QKeySequence(Qt.Key.Key_Space), self)
+        sc_space.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        sc_space.activated.connect(self.toggle_play)
+        self.setari = self.incarca_setari()
+        self.setWindowTitle("Ecran Video - MMP Player")
+        ico_path = "/usr/share/icons/hicolor/256x256/apps/Mplayer_personal.png"
+        cai_ico_app = [
+            "/usr/share/icons/hicolor/256x256/apps/Mplayer_personal.png",
+            os.path.join(getattr(sys, "_MEIPASS", ""), "Mplayer_personal.png"),
+            os.path.expanduser("~/pachet-player/usr/share/icons/hicolor/256x256/apps/Mplayer_personal.png")
+        ]
+        ico_path = next((p for p in cai_ico_app if p and os.path.exists(p)), None)
+        if ico_path:
+            self.setWindowIcon(QIcon(ico_path))
+        self.resize(900, 520)
+        self.setStyleSheet("QMainWindow { background-color: #000000; }")
+        self.video_frame = QLabel("")
+        self.video_frame.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.video_frame.setStyleSheet("background-color: #000000; color: #4f5d75; font-size: 24px; font-weight: bold;")
+        self.setCentralWidget(self.video_frame)
+        locale.setlocale(locale.LC_NUMERIC, "C")
+        self.video_frame.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+
+        self.player = mpv.MPV(
+            wid=str(int(self.video_frame.winId())), keep_open="yes",
+            input_vo_keyboard=False, input_cursor=False,
+            ytdl=True,
+            ytdl_raw_options="cookies-from-browser=firefox",
+            ytdl_format="bestvideo[height<=1080][vcodec!^=av01]+bestaudio/best[height<=1080]",
+            hwdec="vaapi",
+            cache="yes",
+            demuxer_max_bytes="150M",
+            demuxer_max_back_bytes="75M",
+            demuxer_lavf_o="soundfont=/usr/share/sounds/sf2/FluidR3_GM.sf2",
+            sub_auto=self.setari["sub_auto"], sub_file_paths="Subs:Subtitles:subtitles",
+            sub_codepage=self.setari["sub_codare"], sub_font_size=self.setari["sub_marime"],
+            sub_color=self.setari["sub_culoare"], sub_pos=self.setari["sub_pozitie"],
+            save_position_on_quit=self.setari["memoreaza_pozitia"], volume=self.setari["volum_implicit"]
+        )
+        self.aplica_stil_subtitrare()  # <--- ADAUGĂ ACEASTĂ LINIE
+        self.move(180, 60)
+        self.creeaza_meniuri()
+        self.build_mmp-player_dock()
+        self.consola = ConsolaPlutitoare(self)
+        self.aplica_skin(self.setari["tema"])
+        self.consola.move(320, 620)
+        if self.setari["tema"] not in ("dark", "blue", "light"):
+            if not self.isFullScreen():
+                self.consola.show()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.actualizeaza_interfata)
+        self.timer.start(400)
+        self.setAcceptDrops(True)
+        self.setMouseTracking(True)
+        self.video_frame.setMouseTracking(True)  # Important ca mișcarea peste zona video să fie detectată
+        self.fisier_pozitii = os.path.expanduser("~/.config/player_personal_pozitii.json")
+        self.pozitii_salvate = self.incarca_pozitii()
+        self.fisier_curent = None
+        self.timer_cursor = QTimer(self)
+        self.timer_cursor.setInterval(2500)
+        self.timer_cursor.timeout.connect(self.ascunde_cursor_fs)
+
+    def tr(self, key):
+        lang = obtine_limba_activa(self.setari)
+        return TRADUCERI.get(lang, TRADUCERI["en"]).get(key, key)
+
+    def schimba_limba(self, cod):
+        self.setari["limba"] = cod
+        self.salveaza_setari()
+        if not self.fisier_curent:
+            self.setWindowTitle(self.tr("win_title"))
+            self.video_frame.setText(self.tr("placeholder_video"))
+        self.menuBar().clear()
+        self.removeToolBar(self.tb)
+        self.tb.deleteLater()
+        self.creeaza_meniuri()
+
+    def tr(self, key):
+        lang = obtine_limba_activa(self.setari)
+        return TRADUCERI.get(lang, TRADUCERI["en"]).get(key, key)
+
+    def schimba_limba(self, cod):
+        self.setari["limba"] = cod
+        self.salveaza_setari()
+        if not self.fisier_curent:
+            self.setWindowTitle(self.tr("win_title"))
+            self.video_frame.setText(self.tr("placeholder_video"))
+        self.menuBar().clear()
+        self.removeToolBar(self.tb)
+        self.tb.deleteLater()
+        self.creeaza_meniuri()
+
+    def build_mmp-player_dock(self):
+        self.sm_dock = QToolBar("Control MMP Player")
+        self.sm_dock.setMovable(False)
+        self.sm_dock.setFixedHeight(68)
+        self.sm_dock.setStyleSheet("""
+            QToolBar {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #e5e7eb, stop:0.5 #cbd5e1, stop:1 #9ca3af);
+                border-top: 1px solid #6b7280; padding: 4px 8px; spacing: 6px;
+            }
+            QPushButton#sm_round {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:0.5 #d1d5db, stop:1 #9ca3af);
+                color: #1f2937; border: 1px solid #4b5563; border-radius: 17px;
+                min-width: 34px; max-width: 34px; min-height: 34px; max-height: 34px; font-weight: bold; font-size: 13px;
+            }
+            QPushButton#sm_round_big {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:0.5 #e5e7eb, stop:1 #9ca3af);
+                color: #111827; border: 1px solid #374151; border-radius: 21px;
+                min-width: 42px; max-width: 42px; min-height: 42px; max-height: 42px; font-weight: bold; font-size: 16px;
+            }
+            QPushButton#sm_round:hover, QPushButton#sm_round_big:hover { border: 2px solid #0284c7; color: #0284c7; }
+            QFrame#sm_lcd {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #18181b, stop:1 #27272a);
+                border: 2px inset #52525b; border-radius: 6px;
+            }
+            QLabel#sm_lbl_title { color: #e4e4e7; font-family: sans-serif; font-size: 12px; font-weight: bold; background: transparent; }
+            QLabel#sm_lbl_time { color: #d4d4d8; font-family: monospace; font-size: 11px; background: transparent; }
+            QSlider#sm_slider::groove:horizontal { height: 4px; background: #09090b; border: 1px solid #52525b; border-radius: 2px; }
+            QSlider#sm_slider::handle:horizontal { background: #e4e4e7; border: 1px solid #18181b; width: 12px; margin: -4px 0; border-radius: 6px; }
+            QPushButton#sm_sq {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #f3f4f6, stop:1 #9ca3af);
+                color: #1f2937; border: 1px solid #4b5563; border-radius: 3px;
+                min-width: 24px; max-width: 24px; min-height: 20px; max-height: 20px; font-size: 11px; font-weight: bold;
+            }
+        """)
+
+        container = QWidget()
+        hlay = QHBoxLayout(container)
+        hlay.setContentsMargins(2, 0, 2, 0)
+        hlay.setSpacing(5)
+
+        # 1. Stanga: cele 6 butoane rotunde argintii (Prev, Rew, Play mare, Stop, Fwd, Next)
+        btns_left = (
+            ("⏮", "sm_round", self.anterior_sigur),
+            ("⏪", "sm_round", lambda: self.player.command("seek", -10)),
+            ("⏯", "sm_play", self.toggle_play),
+            ("⏹", "sm_round", self.stop_sigur),
+            ("⏩", "sm_round", lambda: self.player.command("seek", 10)),
+            ("⏭", "sm_round", self.urmator_sigur),
+        )
+        for txt, obj, fn in btns_left:
+            b = QPushButton(txt)
+            b.setObjectName(obj)
+            b.clicked.connect(fn)
+            hlay.addWidget(b)
+
+        # 2. Centru: ecranul negru LCD (MMP Player + timp + bara derulare)
+        lcd = QFrame()
+        lcd.setObjectName("sm_lcd")
+        v_lcd = QVBoxLayout(lcd)
+        v_lcd.setContentsMargins(8, 3, 8, 3)
+        v_lcd.setSpacing(2)
+
+        self.dock_titlu = QLabel("MMP Player")
+        self.dock_titlu.setObjectName("sm_lbl_title")
+        v_lcd.addWidget(self.dock_titlu)
+
+        r_time = QHBoxLayout()
+        self.dock_t1 = QLabel("00:00:00")
+        self.dock_t1.setObjectName("sm_lbl_time")
+        self.dock_seek = QSlider(Qt.Orientation.Horizontal)
+        self.dock_seek.setObjectName("sm_slider")
+        self.dock_seek.setRange(0, 1000)
+        self.dock_seek.sliderMoved.connect(self.deruleaza)
+        self.dock_t2 = QLabel("00:00:00")
+        self.dock_t2.setObjectName("sm_lbl_time")
+        r_time.addWidget(self.dock_t1)
+        r_time.addWidget(self.dock_seek, stretch=1)
+        r_time.addWidget(self.dock_t2)
+        v_lcd.addLayout(r_time)
+        hlay.addWidget(lcd, stretch=1)
+
+        # 3. Dreapta: Volum sus + 3 butoane patrate mici jos
+        v_right = QVBoxLayout()
+        v_right.setSpacing(3)
+        r_vol = QHBoxLayout()
+        lbl_v = QLabel("🔊")
+        lbl_v.setStyleSheet("color: #1f2937; background: transparent; font-size: 11px;")
+        self.dock_vol = QSlider(Qt.Orientation.Horizontal)
+        self.dock_vol.setRange(0, 130)
+        self.dock_vol.setValue(int(self.setari["volum_implicit"]))
+        self.dock_vol.setFixedWidth(72)
+        self.dock_vol.valueChanged.connect(lambda v: setattr(self.player, "volume", v))
+        r_vol.addWidget(lbl_v)
+        r_vol.addWidget(self.dock_vol)
+        v_right.addLayout(r_vol)
+
+        r_sq = QHBoxLayout()
+        r_sq.setSpacing(3)
+        for ic, fn in (("⛶", self.toggle_fullscreen), ("💬", self.incarca_subtitrare), ("⚙️", self.deschide_preferinte)):
+            bs = QPushButton(ic)
+            bs.setObjectName("sm_sq")
+            bs.clicked.connect(fn)
+            r_sq.addWidget(bs)
+        v_right.addLayout(r_sq)
+        hlay.addLayout(v_right)
+
+        self.sm_dock.addWidget(container)
+        self.addToolBar(Qt.ToolBarArea.BottomToolBarArea, self.sm_dock)
+
+    def creeaza_meniuri(self):
+        mb = self.menuBar()
+        mb.setStyleSheet("QMenuBar { background: #e8e8e8; color: #111; border-bottom: 1px solid #bbb; } QMenuBar::item:selected { background: #cce8ff; } QMenu { background: #f8f8f8; color: #111; border: 1px solid #aaa; } QMenu::item:selected { background: #3399ff; color: #fff; }")
+
+        # 1. DESCHIDE (Open)
+        m_des = mb.addMenu(self.tr("m_open"))
+        m_des.addAction(self.tr("a_file"), self.deschide_fisiere)
+        m_des.addAction(self.tr("a_dir"), self.deschide_folder)
+        m_des.addAction(self.tr("a_playlist"), lambda: self.consola.setVisible(True))
+        m_des.addAction(self.tr("a_url"), self.deschide_url)
+        m_des.addSeparator()
+        act_iesire = m_des.addAction(self.tr("a_exit"), self.close)
+        act_iesire.setShortcut("Ctrl+Q")
+
+        # 2. REDARE (Play)
+        m_red = mb.addMenu(self.tr("m_play"))
+        m_red.addAction(self.tr("a_play"), lambda: setattr(self.player, "pause", False))
+        m_red.addAction(self.tr("a_pause"), self.toggle_play)
+        m_red.addAction(self.tr("a_stop"), self.stop_sigur)
+        m_red.addAction(self.tr("a_fstep"), lambda: self.player.command("frame-step"))
+        m_red.addAction(self.tr("a_fbstep"), lambda: self.player.command("frame-back-step"))
+        m_red.addSeparator()
+        m_red.addAction(self.tr("a_seek_m10"), lambda: self.player.command("seek", -10))
+        m_red.addAction(self.tr("a_seek_p10"), lambda: self.player.command("seek", 10))
+        m_red.addAction(self.tr("a_seek_m60"), lambda: self.player.command("seek", -60))
+        m_red.addAction(self.tr("a_seek_p60"), lambda: self.player.command("seek", 60))
+        m_red.addSeparator()
+        m_vit = m_red.addMenu(self.tr("m_speed"))
+        for v in (0.5, 0.75, 1.0, 1.25, 1.5, 2.0):
+            m_vit.addAction(f"{v}x", lambda val=v: setattr(self.player, "speed", val))
+        m_red.addSeparator()
+        m_red.addAction(self.tr("a_prev"), self.anterior_sigur)
+        m_red.addAction(self.tr("a_next"), self.urmator_sigur)
+
+        # 3. VIDEO
+        m_vid = mb.addMenu(self.tr("m_video"))
+        m_vid.addAction(self.tr("a_full"), self.toggle_fullscreen)
+        m_asp = m_vid.addMenu(self.tr("m_aspect"))
+        for nume_a, val_a in ((self.tr("aspect_auto"), "-1"), ("16:9", "16:9"), ("4:3", "4:3"), ("2.35:1", "2.35:1")):
+            m_asp.addAction(nume_a, lambda a=val_a: setattr(self.player, "video_aspect_override", a))
+        m_rot = m_vid.addMenu(self.tr("m_rotate"))
+        for deg in (0, 90, 180, 270):
+            m_rot.addAction(f"{deg}°", lambda d=deg: setattr(self.player, "video_rotate", d))
+        m_vid.addSeparator()
+        m_vid.addAction(self.tr("a_bright_p"), lambda: setattr(self.player, "brightness", min(100, (self.player.brightness or 0) + 5)))
+        m_vid.addAction(self.tr("a_bright_m"), lambda: setattr(self.player, "brightness", max(-100, (self.player.brightness or 0) - 5)))
+        m_vid.addAction(self.tr("a_shot"), lambda: self.player.command("screenshot"))
+
+        # 4. AUDIO
+        m_aud = mb.addMenu(self.tr("m_audio"))
+        m_aud.addAction(self.tr("a_load_audio"), self.deschide_fisiere)
+        m_aud.addSeparator()
+        m_aud.addAction(self.tr("a_mute"), lambda: setattr(self.player, "mute", not self.player.mute))
+        m_aud.addAction(self.tr("a_vol_m"), lambda: setattr(self.player, "volume", max(0, (self.player.volume or 85) - 10)))
+        m_aud.addAction(self.tr("a_vol_p"), lambda: setattr(self.player, "volume", min(130, (self.player.volume or 85) + 10)))
+        m_aud.addSeparator()
+        m_aud.addAction(self.tr("a_adelay_m"), lambda: setattr(self.player, "audio_delay", (self.player.audio_delay or 0) - 0.1))
+        m_aud.addAction(self.tr("a_adelay_p"), lambda: setattr(self.player, "audio_delay", (self.player.audio_delay or 0) + 0.1))
+
+        # 5. SUBTITRĂRI (Subtitles)
+        m_sub = mb.addMenu(self.tr("m_sub"))
+        m_sub.addAction(self.tr("a_load_sub"), self.incarca_subtitrare)
+        m_sub.addAction(self.tr("a_toggle_sub"), lambda: setattr(self.player, "sub_visibility", not self.player.sub_visibility))
+        m_sub.addSeparator()
+        m_sub.addAction(self.tr("a_sub_big"), lambda: setattr(self.player, "sub_font_size", (self.player.sub_font_size or 40) + 4))
+        m_sub.addAction(self.tr("a_sub_small"), lambda: setattr(self.player, "sub_font_size", max(16, (self.player.sub_font_size or 40) - 4)))
+        m_sub.addAction(self.tr("a_sub_up"), lambda: setattr(self.player, "sub_pos", max(10, int(self.player.sub_pos or 100) - 2)))
+        m_sub.addAction(self.tr("a_sub_down"), lambda: setattr(self.player, "sub_pos", min(100, int(self.player.sub_pos or 100) + 2)))
+        m_sub.addSeparator()
+        m_sub.addAction(self.tr("a_sdelay_m"), lambda: setattr(self.player, "sub_delay", (self.player.sub_delay or 0) - 0.1))
+        m_sub.addAction(self.tr("a_sdelay_p"), lambda: setattr(self.player, "sub_delay", (self.player.sub_delay or 0) + 0.1))
+
+        # 6. RĂSFOIRE (Browse)
+        m_bro = mb.addMenu(self.tr("m_browse"))
+        m_bro.addAction(self.tr("a_toggle_console"), lambda: self.consola.setVisible(not self.consola.isVisible()))
+        m_bro.addAction(self.tr("a_shot"), lambda: self.player.command("screenshot"))
+
+        # 7. OPȚIUNI (Options)
+        m_opt = mb.addMenu(self.tr("m_options"))
+        m_skin = m_opt.addMenu(self.tr("m_skin"))
+        for nume_s, cod_s in ((self.tr("skin_dark"), "dark"), (self.tr("skin_blue"), "blue"), (self.tr("skin_light"), "light")):
+            m_skin.addAction(nume_s, lambda c=cod_s: self.aplica_skin(c))
+        m_lang = m_opt.addMenu(self.tr("m_lang"))
+        for et_l, cod_l in ((self.tr("lang_auto"), "auto"), (self.tr("lang_ro"), "ro"), (self.tr("lang_en"), "en")):
+            act_l = m_lang.addAction(et_l, lambda c=cod_l: self.schimba_limba(c))
+            act_l.setCheckable(True)
+            act_l.setChecked(self.setari.get("limba", "auto") == cod_l)
+        m_opt.addAction(self.tr("a_prefs"), self.deschide_preferinte)
+
+        # 8. AJUTOR (Help)
+        m_hlp = mb.addMenu(self.tr("m_help"))
+        m_hlp.addAction(self.tr("a_about"), self.arata_despre)
+
+        # BARA DE UNELTE (TOOLBAR) CU ICONITE REALE DE SISTEM
+        self.tb = QToolBar("Unelte MMP Player")
+        self.tb.setMovable(False)
+        self.tb.setIconSize(QSize(22, 22))
+        self.tb.setStyleSheet("QToolBar { background: #e8e8e8; border-bottom: 1px solid #aaa; spacing: 4px; padding: 3px; } QToolButton { padding: 3px; border-radius: 3px; } QToolButton:hover { background: #cce8ff; border: 1px solid #3399ff; }")
+        self.addToolBar(self.tb)
+
+        st = self.style()
+        unelte = (
+            (QIcon.fromTheme("document-open", st.standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton)), "Deschide fisier", self.deschide_fisiere),
+            (QIcon.fromTheme("folder-open", st.standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)), self.tr("tt_dir"), self.deschide_folder),
+            (QIcon.fromTheme("applications-internet", st.standardIcon(QStyle.StandardPixmap.SP_DriveNetIcon)), self.tr("tt_url"), self.deschide_url),
+            (QIcon.fromTheme("camera-photo", st.standardIcon(QStyle.StandardPixmap.SP_DesktopIcon)), "Captura de ecran", lambda: self.player.command("screenshot")),
+            (QIcon.fromTheme("view-fullscreen", st.standardIcon(QStyle.StandardPixmap.SP_TitleBarMaxButton)), self.tr("tt_full"), self.toggle_fullscreen),
+            (QIcon.fromTheme("media-skip-backward", st.standardIcon(QStyle.StandardPixmap.SP_MediaSkipBackward)), self.tr("tt_prev"), self.anterior_sigur),
+            (QIcon.fromTheme("media-skip-forward", st.standardIcon(QStyle.StandardPixmap.SP_MediaSkipForward)), "Urmator", self.urmator_sigur),
+            (QIcon.fromTheme("media-view-subtitles", st.standardIcon(QStyle.StandardPixmap.SP_FileDialogDetailedView)), "Incarca subtitrare", self.incarca_subtitrare),
+            (QIcon.fromTheme("preferences-system", st.standardIcon(QStyle.StandardPixmap.SP_FileDialogListView)), "Preferinte (Ctrl+P)", self.deschide_preferinte),
+        )
+        for ico, tip, fn in unelte:
+            act = QAction(ico, tip, self)
+            act.setToolTip(tip)
+            act.triggered.connect(fn)
+            self.tb.addAction(act)
+
+    def arata_despre(self):
+        ver = "1.0.8 (local)"
+        for cmd in (
+            ["dpkg-query", "-W", "-f=${Version}", "Mplayer_personal"],
+            ["rpm", "-q", "--qf", "%{VERSION}", "Mplayer_personal"],
+            ["pacman", "-Q", "Mplayer_personal"]
+        ):
+            try:
+                out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
+                if out:
+                    ver = out.split()[-1]
+                    break
+            except Exception:
+                pass
+
+        msg = QMessageBox(self)
+        msg.setWindowTitle(self.tr("about_title"))
+        msg.setTextFormat(Qt.TextFormat.RichText)
+        msg.setText(
+            f"<h3>Player Video & Audio Personal</h3>"
+            f"<p><b>Versiune instalată:</b> {ver}</p>"
+            f"<p>Motor multimedia: <b>libmpv</b> + <b>PyQt6</b></p>"
+            f"<p>Dezvoltat și personalizat de <b>Gbagape</b> &copy; {datetime.now().year}</p>"
+        )
+
+        cai_posibile = [
+            "/usr/share/icons/hicolor/256x256/apps/mmp-player-despre.png",
+            os.path.join(getattr(sys, "_MEIPASS", ""), "mmp-player-despre.png"),
+            os.path.expanduser("~/pachet-player/usr/share/icons/hicolor/256x256/apps/mmp-player-despre.png")
+        ]
+        ico_despre = next((p for p in cai_posibile if p and os.path.exists(p)), None)
+
+        if ico_despre:
+            pix = QPixmap(ico_despre).scaled(96, 96, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            msg.setIconPixmap(pix)
+        else:
+            msg.setIcon(QMessageBox.Icon.Information)
+
+        msg.exec()
+
+
+    def deschide_url(self):
+        clip = QApplication.clipboard().text().strip()
+        text_initial = clip if clip.startswith(("http://", "https://")) else ""
+        url, ok = QInputDialog.getText(self, self.tr("tt_url"), self.tr("dlg_url_lbl"), text=text_initial)
+        if ok and url.strip():
+            link = url.strip()
+            self.ultimul_playlist = [link]
+            self.fisier_curent = link
+            self.player.command("playlist-clear")
+            self.player.command("loadfile", link, "replace")
+            self.player.pause = False
+            self.setWindowTitle("Stream URL - MMP Player")
+            self.dock_titlu.setText(link)
+            self.adauga_in_playlist(tuple((url.strip(),)))
+
+    def incarca_setari(self):
+        s = dict(SETARI_IMPLICITE)
+        if os.path.exists(CONFIG_FILE):
+            try:
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    s.update(json.load(f))
+            except Exception: pass
+        return s
+
+    def salveaza_setari(self):
+        os.makedirs(os.path.dirname(CONFIG_FILE), exist_ok=True)
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(self.setari, f, indent=2)
+
+    def aplica_skin(self, nume):
+        self.setari["tema"] = nume
+        self.salveaza_setari()
+        if nume not in ("dark", "blue", "light"): nume = "light"; self.setari["tema"] = "light"
+        if True:
+            self.consola.hide()
+            self.sm_dock.show()
+        else:
+            self.sm_dock.hide()
+            ordine = {"bsplayer": 0, "xine": 1, "winamp": 2}
+            self.consola.stack.setCurrentIndex(ordine.get(nume, 0))
+            self.consola.adjustSize()
+            if not self.isFullScreen():
+                self.consola.show()
+
+    def schimba_skin_rapid(self):
+        toate = ("dark", "blue", "light")
+        curent = self.setari.get("tema", "light")
+        idx = (toate.index(curent) + 1) % len(toate) if curent in toate else 0
+        nume = toate[idx]
+        self.setari["tema"] = nume
+        self.salveaza_setari()
+        self.aplica_skin(nume)
+    def aplica_stil_subtitrare(self):
+        s = self.setari
+        alpha_hex = f"{int(s.get('sub_opacitate', 255)):02X}"
+
+        def cu_opacitate(hex_rgb):
+            return f"#{alpha_hex}{hex_rgb.lstrip('#')}"
+
+        self.player.sub_codepage = s.get("sub_codare", "cp1250")
+        self.player.sub_auto = s.get("sub_auto", "all")
+        self.player.sid = "auto" if s.get("sub_select_first", True) else "no"
+        self.player.sub_ass = bool(s.get("sub_use_ass", True))
+        if s.get("sub_autodetect", False):
+            self.player.sub_auto_detect = True
+            self.player.slang = s.get("sub_lang", "ro,rum,ron")
+        else:
+            self.player.sub_auto_detect = False
+        self.player.sub_ass_override = "force" if s.get("sub_ass_force", False) else "yes"
+
+        if not s.get("sub_custom", True):
+            return
+
+        self.player.sub_font = s.get("sub_font", "Arial")
+        self.player.sub_font_size = s.get("sub_marime", 40)
+        self.player.sub_bold = bool(s.get("sub_bold", False))
+        self.player.sub_italic = bool(s.get("sub_italic", False))
+        self.player.sub_pos = s.get("sub_pozitie", 100)
+        self.player.sub_color = cu_opacitate(s.get("sub_culoare", "#FFFFFF"))
+
+        stil = s.get("sub_stil_chenar", "contur")
+        if stil == "banda":
+            self.player.sub_border_style = "opaque-box"
+            self.player.sub_back_color = cu_opacitate(s.get("sub_culoare_chenar", "#000000"))
+            self.player.sub_border_size = 2
+            self.player.sub_shadow_offset = 0
+        elif stil == "fara":
+            self.player.sub_border_style = "outline-and-shadow"
+            self.player.sub_border_size = 0
+            self.player.sub_shadow_offset = 0
+        else:
+            self.player.sub_border_style = "outline-and-shadow"
+            self.player.sub_border_color = cu_opacitate(s.get("sub_culoare_chenar", "#000000"))
+            self.player.sub_shadow_color = cu_opacitate(s.get("sub_culoare_umbra", "#000000"))
+            self.player.sub_border_size = 3
+            self.player.sub_shadow_offset = 2
+
+    def deschide_preferinte(self):
+        dlg = FereastraPreferinte(self, self.setari)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.setari = dlg.setari
+            self.salveaza_setari()
+            self.aplica_skin(self.setari["tema"])
+            self.aplica_stil_subtitrare()               # <--- ÎNLOCUIEȘTE vechile linii sub_font_size / sub_color / sub_pos cu aceasta!
+            self.player.volume = self.setari["volum_implicit"]
+
+    def deschide_preferinte(self):
+        dlg = FereastraPreferinte(self, self.setari)
+        if dlg.exec() == QDialog.DialogCode.Accepted:
+            self.setari = dlg.setari
+            self.salveaza_setari()
+            self.aplica_skin(self.setari["tema"])
+            self.player.sub_font = self.setari["sub_font"]
+            self.player.sub_font_size = self.setari["sub_marime"]
+            self.player.sub_color = self.setari["sub_culoare"]
+            self.player.sub_pos = self.setari["sub_pozitie"]
+            self.player.volume = self.setari["volum_implicit"]
+
+    def adauga_in_playlist(self, fisiere):
+        self.salveaza_pozitia_curenta()
+        self.ultimul_playlist = list(fisiere)
+        self.fisier_curent = self.ultimul_playlist[0] if self.ultimul_playlist else None
+        self.player.command("playlist-clear")
+        for idx, f in enumerate(fisiere):
+            nume = os.path.basename(f)
+            self.player.command("loadfile", f, "replace" if idx == 0 else "append")
+        if fisiere:
+            nume = os.path.basename(next(iter(fisiere)))
+            self.setWindowTitle(f"{nume} - MMP Player")
+            self.dock_titlu.setText(nume)
+
+    def deschide_fisiere(self):
+        fisiere, _ = QFileDialog.getOpenFileNames(
+            self, "Alege fisier(e)", self.setari["folder_implicit"],
+            "Media (*.mp4 *.mkv *.avi *.mov *.webm *.flv *.wmv *.ogv *.mp3 *.ogg *.oga *.opus *.flac .mid* .midi* *.wav);;Toate (*)"
+        )
+        if fisiere: self.adauga_in_playlist(fisiere)
+
+    def deschide_folder(self):
+        folder = QFileDialog.getExistingDirectory(self, self.tr("dlg_dir_title"), self.setari["folder_implicit"])
+        if folder:
+            ext = (
+                ".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv", ".ogv",
+                ".mp3", ".ogg", ".oga", ".opus", ".flac", ".wav", ".m4a", ".mid", ".midi"
+            )
+            fisiere = [os.path.join(folder, f) for f in sorted(os.listdir(folder)) if f.lower().endswith(ext)]
+            if fisiere: 
+                self.adauga_in_playlist(fisiere)
+
+    def incarca_subtitrare(self):
+        sub, _ = QFileDialog.getOpenFileName(self, self.tr("dlg_sub_title"), self.setari["folder_implicit"], "Subtitrari (*.srt *.sub *.ass *.vtt)")
+        if sub: self.player.sub_add(sub)
+
+    def anterior_sigur(self):
+        try:
+            count = self.player.playlist_count or 0
+            pos = self.player.playlist_pos or 0
+            if count > 1 and pos > 0:
+                self.player.command("playlist-prev")
+            else:
+                self.player.command("seek", 0, "absolute")
+        except Exception:
+            pass
+
+    def urmator_sigur(self):
+        try:
+            count = self.player.playlist_count or 0
+            pos = self.player.playlist_pos or 0
+            if count > 1 and pos < count - 1:
+                self.player.command("playlist-next")
+            else:
+                self.player.command("seek", 60)
+        except Exception:
+            pass
+
+    def stop_sigur(self):
+        self.player.command("stop")
+        self.player.pause = True
+        self.oprit_manual = True
+        self.dock_t1.setText("00:00:00")
+        self.consola.cl_timp.setText("00:00:00")
+        for sl in (self.consola.cl_seek, self.dock_seek):
+            sl.setValue(0)
+
+    def toggle_play(self):
+        # Dacă a fost oprit cu Stop sau playlist-ul e gol, reîncarcă ultimul fișier/playlist/URL de la 00:00:00
+        if getattr(self, "oprit_manual", False) or self.player.idle_active:
+            lista = getattr(self, "ultimul_playlist", [])
+            if lista:
+                self.oprit_manual = False
+                self.player.command("playlist-clear")
+                for i, item in enumerate(lista):
+                    self.player.command("loadfile", item, "replace" if i == 0 else "append")
+                self.player.pause = False
+                return
+        self.player.pause = not self.player.pause
+
+    def toggle_fullscreen(self):
+        if self.isFullScreen():
+            self.menuBar().show()
+            self.tb.show()
+            self.showNormal()
+            self.aplica_skin(self.setari.get("tema", "light"))
+        else:
+            self.menuBar().hide()
+            self.tb.hide()
+            self.sm_dock.hide()
+            self.consola.hide()
+            self.showFullScreen()
+
+    def mouseDoubleClickEvent(self, event):
+        self.toggle_fullscreen()
+
+    def deruleaza(self, val):
+        try:
+            dur = self.player.duration
+            if dur and dur > 0:
+                tinta = (val / 1000.0) * dur
+                self.player.command("seek", tinta, "absolute+keyframes")
+        except Exception:
+            pass
+
+    def format_timp(self, s):
+        if s is None: return "00:00:00"
+        s = int(s)
+        return f"{s // 3600:02d}:{(s % 3600) // 60:02d}:{s % 60:02d}"
+
+    def actualizeaza_interfata(self):
+        try:
+            pos, dur = self.player.time_pos, self.player.duration
+        except Exception:
+            return
+        if pos is not None and dur is not None and dur > 0:
+            t_pos, t_dur = self.format_timp(pos), self.format_timp(dur)
+            val = int((pos / dur) * 1000)
+            self.consola.cl_timp.setText(t_pos)
+            self.consola.cl_dur.setText(t_dur)
+            self.dock_t1.setText(t_pos)
+            self.dock_t2.setText(t_dur)
+            for sl in (self.consola.cl_seek, self.dock_seek):
+                if not sl.isSliderDown(): sl.setValue(val)
+
+    def keyPressEvent(self, event):
+        k = event.key()
+        if k == Qt.Key.Key_X: self.stop_sigur()
+        elif k == Qt.Key.Key_F: self.toggle_fullscreen()
+        elif k == Qt.Key.Key_N: self.deschide_url()
+        elif k in (Qt.Key.Key_Plus, Qt.Key.Key_Equal): self.player.sub_font_size = (self.player.sub_font_size or 40) + 4
+        elif k == Qt.Key.Key_Minus: self.player.sub_font_size = max(16, (self.player.sub_font_size or 40) - 4)
+        elif k == Qt.Key.Key_R: self.player.sub_pos = max(10, int(self.player.sub_pos or 100) - 2)
+        elif k == Qt.Key.Key_T: self.player.sub_pos = min(100, int(self.player.sub_pos or 100) + 2)
+        elif k == Qt.Key.Key_Escape and self.isFullScreen(): self.toggle_fullscreen()
+        elif k == Qt.Key.Key_Up:
+            vol = min(130, int(self.player.volume or 85) + 5)
+            self.player.volume = vol
+            self.dock_vol.setValue(vol)
+            self.player.show_text(self.tr("osd_vol").format(vol=vol), 1000)
+        elif k == Qt.Key.Key_Down:
+            vol = max(0, int(self.player.volume or 85) - 5)
+            self.player.volume = vol
+            self.dock_vol.setValue(vol)
+            self.player.show_text(self.tr("osd_vol").format(vol=vol), 1000)
+        elif k == Qt.Key.Key_M:
+            self.player.mute = not self.player.mute
+            self.player.show_text(self.tr("osd_mute_on") if self.player.mute else self.tr("osd_mute_off"), 1000)
+
+    def wheelEvent(self, event):
+        delta = event.angleDelta().y()
+        if delta == 0:
+            return
+
+        # Dacă ții apăsat Ctrl + Rotiță -> reglează volumul
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            pas = 5 if delta > 0 else -5
+            vol = max(0, min(130, int(self.player.volume or 85) + pas))
+            self.player.volume = vol
+            self.dock_vol.setValue(vol)
+            self.player.show_text(self.tr("osd_vol").format(vol=vol), 1000)
+        # Rotiță simplă -> derulează înainte / înapoi cu 5 secunde
+        else:
+            sec = 10 if delta > 0 else -10
+            try:
+                self.player.command("seek", sec)
+                pos = self.player.time_pos or 0
+                dur = self.player.duration or 0
+                self.player.show_text(self.tr("osd_seek").format(pos=self.format_timp(pos), dur=self.format_timp(dur)), 1200)
+            except Exception:
+                pass
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        urls = [u.toLocalFile() for u in event.mimeData().urls() if u.isLocalFile()]
+        ext_media = (
+            ".mp4", ".mkv", ".avi", ".mov", ".webm", ".flv", ".wmv", ".ogv",
+            ".mp3", ".ogg", ".oga", ".opus", ".flac", ".wav", ".m4a", ".mid", ".midi"
+        )
+        ext_sub = (".srt", ".sub", ".ass", ".vtt")
+
+        fisiere_media = [f for f in urls if f.lower().endswith(ext_media)]
+        fisiere_sub = [f for f in urls if f.lower().endswith(ext_sub)]
+
+        if fisiere_media:
+            self.adauga_in_playlist(sorted(fisiere_media))
+            self.player.pause = False
+        for sub in fisiere_sub:
+            self.player.sub_add(sub)
+
+
+    def incarca_pozitii(self):
+        if os.path.exists(self.fisier_pozitii):
+            try:
+                with open(self.fisier_pozitii, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def salveaza_pozitia_curenta(self):
+        if not self.setari.get("memoreaza_pozitia", True) or not self.fisier_curent:
+            return
+        try:
+            pos = self.player.time_pos
+            dur = self.player.duration
+            if pos and dur and dur > 30:
+                if pos / dur > 0.95:
+                    self.pozitii_salvate.pop(self.fisier_curent, None)
+                else:
+                    self.pozitii_salvate[self.fisier_curent] = pos
+                os.makedirs(os.path.dirname(self.fisier_pozitii), exist_ok=True)
+                with open(self.fisier_pozitii, "w", encoding="utf-8") as f:
+                    json.dump(self.pozitii_salvate, f, indent=2)
+        except Exception:
+            pass
+
+    def ascunde_cursor_fs(self):
+        if self.isFullScreen():
+            self.setCursor(Qt.CursorShape.BlankCursor)
+
+    def mouseMoveEvent(self, event):
+        self.unsetCursor()
+        if self.isFullScreen():
+            self.timer_cursor.start()
+        super().mouseMoveEvent(event)
+
+    def closeEvent(self, event):
+        self.consola.close()
+        self.player.terminate()
+        event.accept()
+
+if __name__ == "__main__":
+    os.environ["QT_QPA_PLATFORM"] = "xcb"
+    app = QApplication(sys.argv)
+    app.setDesktopFileName("mmp-player")
+    app.setWindowIcon(gaseste_iconita_mmp())
+    locale.setlocale(locale.LC_NUMERIC, "C")
+    fereastra = PlayerPersonal()
+    fereastra.show()
+    if len(sys.argv) > 1:
+        fereastra.adauga_in_playlist(tuple(sys.argv[1:]))
+    sys.exit(app.exec())

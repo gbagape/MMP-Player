@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.dll
+*.zip
+*.tar.gz
+*.sha256
+dist/*.deb
+dist/*.rpm
+dist/*.zst
+dist/*.txz
+dist/*.apk
+dist/*.AppImage
+dist/*.run
+dist/*.exe
