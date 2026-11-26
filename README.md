@@ -1,4 +1,4 @@
-[![Download MMP Player v1.0](https://shields.io)](https://github.com)
+[![Download MMP Player v1.0](https://shields.io)](https://github.com/gbagape/MMP-Player/releases/tag/v1.0)
 
 # 🎬 MMP Player (Multimedia Player) v1.0
 
@@ -18,7 +18,7 @@
 
 ## 📦 Installation
 
-> 📥 **Download all installers (Linux, macOS, Windows) from [GitHub Releases v1.0](https://github.com)**
+> 📥 **Download all installers (Linux, macOS, Windows) from [GitHub Releases v1.0](https://github.com/gbagape/MMP-Player/releases/tag/v1.0)**
 
 
 ### 1. Universal Linux Installer (Any Linux distro)

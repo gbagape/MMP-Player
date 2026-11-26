@@ -1,4 +1,4 @@
-[![Download MMP Player v1.0](https://shields.io)](https://github.com)
+[![Download MMP Player v1.0](https://shields.io)](https://github.com/gbagape/MMP-Player/releases/tag/v1.0)
 
 # 🎬 MMP Player (Player Multimedia) v1.0
 
@@ -18,7 +18,7 @@
 
 ## 📦 Instalare
 
-> 📥 **Descarcă toate pachetele de instalare (Linux, macOS, Windows) din [GitHub Releases v1.0](https://github.com)**
+> 📥 **Descarcă toate pachetele de instalare (Linux, macOS, Windows) din [GitHub Releases v1.0](https://github.com/gbagape/MMP-Player/releases/tag/v1.0)**
 
 
 ### 1. Program de instalare universal Linux (pentru orice distribuție)
