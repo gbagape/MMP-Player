@@ -16,6 +16,9 @@
 
 ## 📦 Installation
 
+> 📥 **Download all installers (Linux, macOS, Windows) from [GitHub Releases v1.0](https://github.com)**
+
+
 ### 1. Universal Linux Installer (Any Linux distro)
 Automatically installs dependencies (`python3`, `PyQt6`, `mpv`, `python-mpv`), displays the GNU GPL v3 license, and integrates the application into your desktop menu:
 

@@ -16,6 +16,9 @@
 
 ## 📦 Instalare
 
+> 📥 **Descarcă toate pachetele de instalare (Linux, macOS, Windows) din [GitHub Releases v1.0](https://github.com)**
+
+
 ### 1. Program de instalare universal Linux (pentru orice distribuție)
 Instalează automat pachetele necesare (`python3`, `PyQt6`, `mpv`, `python-mpv`), afișează licența GNU GPL v3 și integrează aplicația în meniul sistemului:
 
