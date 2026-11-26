@@ -1,3 +1,5 @@
+[![Download MMP Player v1.0](https://shields.io)](https://github.com)
+
 # 🎬 MMP Player (Multimedia Player) v1.0
 
 **MMP Player** is a fast, lightweight, and modern cross-platform multimedia player (**Linux, macOS, Windows**) powered by **PyQt6** and **libmpv**, featuring a bilingual interface (**English / Romanian**) and licensed under **GNU GPL v3**.
