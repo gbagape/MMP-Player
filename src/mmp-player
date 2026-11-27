@@ -1070,7 +1070,7 @@ class PlayerPersonal(QMainWindow):
         self.aplica_stil_subtitrare()  # <--- ADAUGĂ ACEASTĂ LINIE
         self.move(180, 60)
         self.creeaza_meniuri()
-        self.build_mmp-player_dock()
+        self.build_mmp_player_dock()
         self.consola = ConsolaPlutitoare(self)
         self.aplica_skin(self.setari["tema"])
         self.consola.move(320, 620)
@@ -1083,6 +1083,14 @@ class PlayerPersonal(QMainWindow):
         self.setAcceptDrops(True)
         self.setMouseTracking(True)
         self.video_frame.setMouseTracking(True)  # Important ca mișcarea peste zona video să fie detectată
+        self.video_frame.installEventFilter(self)
+        self._win_drag_start = None
+        self._win_drag_offset = None
+        self._win_dragging = False
+        self.video_frame.installEventFilter(self)
+        self._win_drag_start = None
+        self._win_drag_offset = None
+        self._win_dragging = False
         self.fisier_pozitii = os.path.expanduser("~/.config/player_personal_pozitii.json")
         self.pozitii_salvate = self.incarca_pozitii()
         self.fisier_curent = None
@@ -1120,7 +1128,7 @@ class PlayerPersonal(QMainWindow):
         self.tb.deleteLater()
         self.creeaza_meniuri()
 
-    def build_mmp-player_dock(self):
+    def build_mmp_player_dock(self):
         self.sm_dock = QToolBar("Control MMP Player")
         self.sm_dock.setMovable(False)
         self.sm_dock.setFixedHeight(68)
@@ -1597,6 +1605,44 @@ class PlayerPersonal(QMainWindow):
             self.sm_dock.hide()
             self.consola.hide()
             self.showFullScreen()
+
+    def _incepe_mutare_fereastra(self, event):
+        if self.isFullScreen():
+            return
+        if self.isMaximized():
+            self.showNormal()
+            self._win_drag_offset = QPoint(self.width() // 2, self.height() // 2)
+        if self._win_drag_offset is not None:
+            self.move(event.globalPosition().toPoint() - self._win_drag_offset)
+
+    def eventFilter(self, obj, event):
+        if obj is getattr(self, "video_frame", None):
+            etype = event.type()
+            if etype == event.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
+                gpos = event.globalPosition().toPoint()
+                self._win_drag_start = gpos
+                self._win_drag_offset = gpos - self.pos()
+                self._win_dragging = False
+                return True
+            elif etype == event.Type.MouseMove and (event.buttons() & Qt.MouseButton.LeftButton):
+                if self._win_drag_start is not None:
+                    gpos = event.globalPosition().toPoint()
+                    if (gpos - self._win_drag_start).manhattanLength() >= 6:
+                        self._win_dragging = True
+                        self._incepe_mutare_fereastra(event)
+                return True
+            elif etype == event.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton:
+                self._win_drag_start = None
+                self._win_drag_offset = None
+                self._win_dragging = False
+                return True
+            elif etype == event.Type.MouseButtonDblClick and event.button() == Qt.MouseButton.LeftButton:
+                self._win_drag_start = None
+                self._win_drag_offset = None
+                self._win_dragging = False
+                self.toggle_fullscreen()
+                return True
+        return super().eventFilter(obj, event)
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_fullscreen()
