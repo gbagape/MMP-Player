@@ -1083,7 +1083,7 @@ class PlayerPersonal(QMainWindow):
         self.setAcceptDrops(True)
         self.setMouseTracking(True)
         self.video_frame.setMouseTracking(True)  # Important ca mișcarea peste zona video să fie detectată
-        self.video_frame.installEventFilter(self)
+        QApplication.instance().installEventFilter(self)
         self._win_drag_start = None
         self._win_drag_offset = None
         self._win_dragging = False
@@ -1616,32 +1616,40 @@ class PlayerPersonal(QMainWindow):
             self.move(event.globalPosition().toPoint() - self._win_drag_offset)
 
     def eventFilter(self, obj, event):
-        if obj is getattr(self, "video_frame", None):
+        if obj is self or obj is getattr(self, "video_frame", None):
             etype = event.type()
             if etype == event.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
-                gpos = event.globalPosition().toPoint()
-                self._win_drag_start = gpos
-                self._win_drag_offset = gpos - self.pos()
-                self._win_dragging = False
-                return True
+                # Verifica sa nu fie click pe meniu sau toolbar
+                local_pt = self.mapFromGlobal(event.globalPosition().toPoint())
+                if self.video_frame.geometry().contains(local_pt):
+                    gpos = event.globalPosition().toPoint()
+                    self._win_drag_start = gpos
+                    self._win_drag_offset = gpos - self.pos()
+                    self._win_dragging = False
+                    return True
             elif etype == event.Type.MouseMove and (event.buttons() & Qt.MouseButton.LeftButton):
                 if self._win_drag_start is not None:
                     gpos = event.globalPosition().toPoint()
                     if (gpos - self._win_drag_start).manhattanLength() >= 6:
                         self._win_dragging = True
                         self._incepe_mutare_fereastra(event)
-                return True
+                    return True
             elif etype == event.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton:
-                self._win_drag_start = None
-                self._win_drag_offset = None
-                self._win_dragging = False
-                return True
+                if self._win_drag_start is not None:
+                    was_drag = self._win_dragging
+                    self._win_drag_start = None
+                    self._win_drag_offset = None
+                    self._win_dragging = False
+                    if was_drag:
+                        return True
             elif etype == event.Type.MouseButtonDblClick and event.button() == Qt.MouseButton.LeftButton:
-                self._win_drag_start = None
-                self._win_drag_offset = None
-                self._win_dragging = False
-                self.toggle_fullscreen()
-                return True
+                local_pt = self.mapFromGlobal(event.globalPosition().toPoint())
+                if self.video_frame.geometry().contains(local_pt):
+                    self._win_drag_start = None
+                    self._win_drag_offset = None
+                    self._win_dragging = False
+                    self.toggle_fullscreen()
+                    return True
         return super().eventFilter(obj, event)
 
     def mouseDoubleClickEvent(self, event):
