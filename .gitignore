@@ -12,3 +12,4 @@ dist/*.apk
 dist/*.AppImage
 dist/*.run
 dist/*.exe
+debian/files
