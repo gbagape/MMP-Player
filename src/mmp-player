@@ -1033,11 +1033,11 @@ class PlayerPersonal(QMainWindow):
         sc_space.activated.connect(self.toggle_play)
         self.setari = self.incarca_setari()
         self.setWindowTitle("Ecran Video - MMP Player")
-        ico_path = "/usr/share/icons/hicolor/256x256/apps/Mplayer_personal.png"
+        ico_path = "/usr/share/icons/hicolor/256x256/apps/mmp-player.png"
         cai_ico_app = [
-            "/usr/share/icons/hicolor/256x256/apps/Mplayer_personal.png",
-            os.path.join(getattr(sys, "_MEIPASS", ""), "Mplayer_personal.png"),
-            os.path.expanduser("~/pachet-player/usr/share/icons/hicolor/256x256/apps/Mplayer_personal.png")
+            "/usr/share/icons/hicolor/256x256/apps/mmp-player.png",
+            os.path.join(getattr(sys, "_MEIPASS", ""), "mmp-player.png"),
+            os.path.expanduser("~/pachet-player/usr/share/icons/hicolor/256x256/apps/mmp-player.png")
         ]
         ico_path = next((p for p in cai_ico_app if p and os.path.exists(p)), None)
         if ico_path:
@@ -1356,11 +1356,11 @@ class PlayerPersonal(QMainWindow):
             self.tb.addAction(act)
 
     def arata_despre(self):
-        ver = "1.0.8 (local)"
+        ver = "1.1 (local)"
         for cmd in (
-            ["dpkg-query", "-W", "-f=${Version}", "Mplayer_personal"],
-            ["rpm", "-q", "--qf", "%{VERSION}", "Mplayer_personal"],
-            ["pacman", "-Q", "Mplayer_personal"]
+            ["dpkg-query", "-W", "-f=${Version}", "mmp-player"],
+            ["rpm", "-q", "--qf", "%{VERSION}", "mmp-player"],
+            ["pacman", "-Q", "mmp-player"]
         ):
             try:
                 out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL).strip()
