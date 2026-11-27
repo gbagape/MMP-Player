@@ -2,7 +2,7 @@
 set -e
 
 APP="mmp-player"
-VER="1.0"
+VER="1.1"
 OUT="dist"
 mkdir -p "$OUT" build_tmp
 

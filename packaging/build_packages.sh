@@ -2,7 +2,7 @@
 set -e
 
 APP="mmp-player"
-VER="1.0"
+VER="1.1"
 OUT="dist"
 rm -rf "$OUT" build_tmp
 mkdir -p "$OUT" build_tmp
@@ -57,7 +57,7 @@ if command -v makepkg >/dev/null 2>&1; then
     cp src/mmp-player assets/mmp-player.desktop assets/mmp-player.png LICENSE build_tmp/arch/
     cat << 'PKGBUILD' > build_tmp/arch/PKGBUILD
 pkgname=mmp-player
-pkgver=1.0
+pkgver=1.1
 pkgrel=1
 pkgdesc="MMP Player (Multimedia Player) powered by PyQt6 and libmpv (RO/EN)"
 arch=('any')
@@ -133,5 +133,5 @@ fi
 
 rm -rf build_tmp
 echo ""
-echo "✅ Toate pachetele au fost generate în folderul MMP-Player-1.0/$OUT/:"
+echo "✅ Toate pachetele au fost generate în folderul MMP-Player-1.1/$OUT/:"
 ls -lh "$OUT"

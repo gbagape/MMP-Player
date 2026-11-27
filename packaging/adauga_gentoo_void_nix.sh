@@ -3,8 +3,8 @@ set -e
 
 mkdir -p dist/gentoo dist/void dist/nix
 
-# 1. Gentoo Ebuild (mmp-player-1.0.ebuild)
-cat << 'EBUILD' > dist/gentoo/mmp-player-1.0.ebuild
+# 1. Gentoo Ebuild (mmp-player-1.1.ebuild)
+cat << 'EBUILD' > dist/gentoo/mmp-player-1.1.ebuild
 # Copyright 2026 MMP Player Contributors
 # Distributed under the terms of the GNU General Public License v3
 
@@ -43,7 +43,7 @@ EBUILD
 cat << 'VOIDTPL' > dist/void/template
 # Template file for 'mmp-player'
 pkgname=mmp-player
-version=1.0
+version=1.1
 revision=1
 archs=noarch
 depends="python3 python3-PyQt6 mpv python3-mpv"
@@ -67,9 +67,9 @@ cat << 'NIX' > dist/nix/default.nix
 
 pkgs.stdenv.mkDerivation rec {
   pname = "mmp-player";
-  version = "1.0";
+  version = "1.1";
 
-  src = ./../MMP-Player-1.0-RO-EN-GPLv3.tar.gz;
+  src = ./../MMP-Player-1.1-RO-EN-GPLv3.tar.gz;
   sourceRoot = ".";
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
@@ -100,8 +100,8 @@ if ! grep -q "command -v emerge" install.sh; then
     sed -i '/elif command -v xbps-install/i \    elif command -v emerge >/dev/null 2>&1;\n        $SUDO emerge --noreplace dev-lang/python dev-python/pyqt6 media-video/mpv dev-python/python-mpv' install.sh
 fi
 
-tar -czf "dist/MMP-Player-1.0-RO-EN-GPLv3.tar.gz" src assets LICENSE install.sh
-cat << 'RUNHDR' > "dist/MMP-Player-1.0-Linux-Universal.run"
+tar -czf "dist/MMP-Player-1.1-RO-EN-GPLv3.tar.gz" src assets LICENSE install.sh
+cat << 'RUNHDR' > "dist/MMP-Player-1.1-Linux-Universal.run"
 #!/usr/bin/env bash
 set -e
 TMPDIR="$(mktemp -d /tmp/mmp-player-install.XXXXXX)"
@@ -112,8 +112,8 @@ bash "$TMPDIR/install.sh" "$@"
 exit 0
 __ARCHIVE_BELOW__
 RUNHDR
-cat "dist/MMP-Player-1.0-RO-EN-GPLv3.tar.gz" >> "dist/MMP-Player-1.0-Linux-Universal.run"
-chmod +x "dist/MMP-Player-1.0-Linux-Universal.run"
+cat "dist/MMP-Player-1.1-RO-EN-GPLv3.tar.gz" >> "dist/MMP-Player-1.1-Linux-Universal.run"
+chmod +x "dist/MMP-Player-1.1-Linux-Universal.run"
 
 echo "✅ Suport adăugat pentru Gentoo (.ebuild), Void Linux (template), NixOS (default.nix) + Slackware (.txz)!"
 ls -R dist/

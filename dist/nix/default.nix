@@ -2,9 +2,9 @@
 
 pkgs.stdenv.mkDerivation rec {
   pname = "mmp-player";
-  version = "1.0";
+  version = "1.1";
 
-  src = ./../MMP-Player-1.0-RO-EN-GPLv3.tar.gz;
+  src = ./../MMP-Player-1.1-RO-EN-GPLv3.tar.gz;
   sourceRoot = ".";
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
