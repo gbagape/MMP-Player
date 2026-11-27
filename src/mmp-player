@@ -117,7 +117,7 @@ TRADUCERI = {
         "dlg_url_title": "Deschide URL", "dlg_url_lbl": "Lipește link-ul video:",
         "dlg_files_title": "Alege fișier(e)", "dlg_dir_title": "Alege folderul",
         "dlg_sub_title": "Alege subtitrarea", "about_title": "Despre MMP Player",
-        "about_text": "MMP Player (Multimedia Player) v1.0\n\nPlayer multimedia bazat pe PyQt6 și libmpv.\nLicență: GNU General Public License v3.0 (GPL-3.0-or-later)\n\nAcest program este software liber și vine FĂRĂ NICIO GARANȚIE.",
+        "about_text": "MMP Player (Multimedia Player) v1.1\n\nPlayer multimedia bazat pe PyQt6 și libmpv.\nLicență: GNU General Public License v3.0 (GPL-3.0-or-later)\n\nAcest program este software liber și vine FĂRĂ NICIO GARANȚIE.",
         "btn_license": "📜 Licență GPL v3",
         "lic_win_title": "Licență GNU GPL v3 - MMP Player",
         "osd_vol": "Volum: {vol}%", "osd_mute_on": "Mut: Pornit", "osd_mute_off": "Mut: Oprit",
