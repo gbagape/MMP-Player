@@ -1,0 +1,16 @@
+Source: mmp-player
+Section: video
+Priority: optional
+Maintainer: gbagape <gbagape@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.2
+Homepage: https://github.com/gbagape/MMP-Player
+
+Package: mmp-player
+Architecture: all
+Depends: ${misc:Depends}, python3, python3-pyqt6, libmpv2 | libmpv1, python3-mpv
+Recommends: yt-dlp, fluid-soundfont-gm
+Description: Cross-platform bilingual (RO/EN) multimedia player
+ MMP Player is a lightweight multimedia player built with PyQt6 and libmpv,
+ supporting local video/audio files, MIDI playback, YouTube streams, and
+ bilingual Romanian/English interface.

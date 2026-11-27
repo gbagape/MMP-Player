@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+%:
+	dh $@
+
+override_dh_auto_install:
+	install -Dm755 src/mmp-player debian/mmp-player/usr/bin/mmp-player
+	install -Dm644 assets/mmp-player.png debian/mmp-player/usr/share/icons/hicolor/256x256/apps/mmp-player.png
+	install -Dm644 assets/mmp-despre.png debian/mmp-player/usr/share/icons/hicolor/256x256/apps/mmp-despre.png
+	install -Dm644 LICENSE debian/mmp-player/usr/share/doc/mmp-player/copyright
+	mkdir -p debian/mmp-player/usr/share/applications
+	printf "[Desktop Entry]\nName=MMP Player\nComment=Bilingual multimedia player (MPV + PyQt6)\nExec=mmp-player %%F\nIcon=mmp-player\nTerminal=false\nType=Application\nCategories=AudioVideo;Player;Video;\n" > debian/mmp-player/usr/share/applications/mmp-player.desktop

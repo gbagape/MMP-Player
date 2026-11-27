@@ -1,0 +1,5 @@
+mmp-player (1.0-1~resolute1) resolute; urgency=medium
+
+  * Release of MMP Player 1.0 for Ubuntu resolute (RO/EN, PyQt6 + libmpv).
+
+ -- gbagape <gbagape@gmail.com>  Fri, 27 Nov 2026 11:50:00 +0200
