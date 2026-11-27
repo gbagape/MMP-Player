@@ -26,11 +26,12 @@ exec python3 "$HERE/usr/bin/mmp-player" "$@"
 APPRUN
 chmod +x "$APPDIR/AppRun"
 
-if command -v appimagetool >/dev/null 2>&1; then
+if false && command -v appimagetool >/dev/null 2>&1; then
     ARCH=x86_64 APPIMAGE_EXTRACT_AND_RUN=1 appimagetool "$APPDIR" "$OUT/MMP-Player-${VER}-x86_64.AppImage"
 else
     # Generam AppImage auto-mount / auto-extract bazat pe squashfs (100% compatibil orice Linux)
-    mksquashfs "$APPDIR" build_tmp/app.squashfs -comp zstd -noappend >/dev/null
+    mkdir -p build_tmp
+    if command -v mksquashfs >/dev/null 2>&1; then mksquashfs "$APPDIR" build_tmp/app.squashfs -comp zstd -noappend >/dev/null; else tar -czf build_tmp/app.squashfs -C "$APPDIR" .; fi
     cat << 'STUB' > "$OUT/MMP-Player-${VER}-x86_64.AppImage"
 #!/usr/bin/env bash
 set -e
@@ -60,7 +61,7 @@ cp README.md LICENSE "$OUT/"
 (
     cd "$OUT"
     rm -f SHA256SUMS
-    sha256sum *.run *.tar.gz *.deb *.rpm *.pkg.tar.zst *.txz *.apk *.AppImage 2>/dev/null > SHA256SUMS
+    sha256sum *.run *.tar.gz *.deb *.rpm *.txz *.apk *.AppImage > SHA256SUMS
 )
 
 echo ""

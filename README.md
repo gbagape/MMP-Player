@@ -91,4 +91,4 @@ chmod +x MMP-Player-1.1-Linux-Universal.run
 
 ## 📜 License
 
-This project is distributed under the terms of the **GNU General Public License v3.0 (GPL-3.0-or-later)**. See the [`LICENSE`](LICENSE) file for the full text.
+This project is distributed under the terms of the **GNU General Public License v1.1 (GPL-3.0-or-later)**. See the [`LICENSE`](LICENSE) file for the full text.

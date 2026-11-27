@@ -81,11 +81,21 @@ if command -v makensis >/dev/null 2>&1 && [ -f packaging/windows/libmpv-2.dll ];
     cp LICENSE build_tmp/win/
     python3 -c 'from PIL import Image; Image.open("assets/mmp-player.png").save("build_tmp/win/mmp-player.ico", format="ICO", sizes=[(16,16),(32,32),(48,48),(64,64),(128,128),(256,256)])' 2>/dev/null || true
 
+    cat << 'BAT' > build_tmp/win/MMP-Player.bat
+@echo off
+cd /d "%~dp0"
+where pythonw >nul 2>nul && (start "" pythonw mmp-player.pyw %* & exit /b)
+where py >nul 2>nul && (start "" py -3 mmp-player.pyw %* & exit /b)
+winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+py -3 -m pip install PyQt6 python-mpv yt-dlp
+start "" py -3 mmp-player.pyw %*
+BAT
+
     cat << NSI > build_tmp/win/installer.nsi
 Unicode true
 Name "MMP Player $VER"
 OutFile "../../dist/MMP-Player-${VER}-Windows-Setup.exe"
-InstallDir "\$PROGRAMFILES64\\MMP Player"
+InstallDir "\$PROGRAMFILES64\MMP Player"
 RequestExecutionLevel admin
 Page license
 Page directory
@@ -97,30 +107,22 @@ LicenseData "LICENSE"
 Section "MMP Player $VER" SecMain
   SetOutPath "\$INSTDIR"
   File "mmp-player.pyw"
+  File "MMP-Player.bat"
   File "libmpv-2.dll"
   File "mmp-player.png"
   File "LICENSE"
   IfFileExists "mmp-player.ico" 0 +2
     File "mmp-player.ico"
-  FileOpen \$0 "\$INSTDIR\\MMP-Player.bat" w
-  FileWrite \$0 "@echo off\$\\r\$\\n"
-  FileWrite \$0 "cd /d \$"%~dp0\$"\$\\r\$\\n"
-  FileWrite \$0 "where pythonw >nul 2>nul && (start \$"\$" pythonw mmp-player.pyw %* & exit /b)\$\\r\$\\n"
-  FileWrite \$0 "where py >nul 2>nul && (start \$"\$" py -3 mmp-player.pyw %* & exit /b)\$\\r\$\\n"
-  FileWrite \$0 "winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements\$\\r\$\\n"
-  FileWrite \$0 "py -3 -m pip install PyQt6 python-mpv yt-dlp\$\\r\$\\n"
-  FileWrite \$0 "start \$"\$" py -3 mmp-player.pyw %*\$\\r\$\\n"
-  FileClose \$0
-  CreateDirectory "\$SMPROGRAMS\\MMP Player"
-  CreateShortCut "\$SMPROGRAMS\\MMP Player\\MMP Player.lnk" "\$INSTDIR\\MMP-Player.bat" "" "\$INSTDIR\\mmp-player.ico"
-  CreateShortCut "\$DESKTOP\\MMP Player.lnk" "\$INSTDIR\\MMP-Player.bat" "" "\$INSTDIR\\mmp-player.ico"
-  WriteUninstaller "\$INSTDIR\\Uninstall.exe"
+  CreateDirectory "\$SMPROGRAMS\MMP Player"
+  CreateShortCut "\$SMPROGRAMS\MMP Player\MMP Player.lnk" "\$INSTDIR\MMP-Player.bat" "" "\$INSTDIR\mmp-player.ico"
+  CreateShortCut "\$DESKTOP\MMP Player.lnk" "\$INSTDIR\MMP-Player.bat" "" "\$INSTDIR\mmp-player.ico"
+  WriteUninstaller "\$INSTDIR\Uninstall.exe"
 SectionEnd
 
 Section "Uninstall"
   RMDir /r "\$INSTDIR"
-  RMDir /r "\$SMPROGRAMS\\MMP Player"
-  Delete "\$DESKTOP\\MMP Player.lnk"
+  RMDir /r "\$SMPROGRAMS\MMP Player"
+  Delete "\$DESKTOP\MMP Player.lnk"
 SectionEnd
 NSI
     makensis -V2 build_tmp/win/installer.nsi
@@ -131,7 +133,7 @@ cp README.md dist/README.md
 (
   cd dist
   rm -f SHA256SUMS MMP-Player-*-Complete-Release.zip MMP-Player-*-Complete-Release.zip.sha256
-  sha256sum * > SHA256SUMS
+  find . -maxdepth 1 -type f ! -name 'SHA256SUMS' -exec sha256sum {} + | sed 's|\./||' | sort -k2 > SHA256SUMS
   zip -qr "MMP-Player-${VER}-Complete-Release.zip" .
   sha256sum "MMP-Player-${VER}-Complete-Release.zip" > "MMP-Player-${VER}-Complete-Release.zip.sha256"
 )
