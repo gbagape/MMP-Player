@@ -45,7 +45,8 @@ chmod +x MMP-Player-1.0-Linux-Universal.run
 | Distribution | Install Command |
 | :--- | :--- |
 | **Arch Linux / Manjaro / EndeavourOS** | `sudo pacman -U mmp-player-1.0-1-any.pkg.tar.zst` |
-| **Debian / Ubuntu / Linux Mint** | `sudo apt install ./mmp-player_1.0_all.deb` |
+| **Ubuntu / Linux Mint (Official PPA — 22.04+)** | `sudo add-apt-repository ppa:gbagape/mmp-player && sudo apt update && sudo apt install mmp-player` |
+| **Debian / Ubuntu / Linux Mint (Manual .deb)** | `sudo apt install ./mmp-player_1.0_all.deb` |
 | **Fedora / PCLinuxOS / RHEL / Nobara** | `sudo dnf install ./mmp-player-1.0-1.noarch.rpm` |
 | **openSUSE Tumbleweed / Leap** | `sudo zypper install ./mmp-player-1.0-1.noarch.rpm` |
 | **Slackware** | `sudo installpkg mmp-player-1.0-noarch-1.txz` |
