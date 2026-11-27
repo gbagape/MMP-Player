@@ -7,7 +7,7 @@ Standards-Version: 4.6.2
 Homepage: https://github.com/gbagape/MMP-Player
 
 Package: mmp-player
-Architecture: all
+Architecture: any
 Depends: ${misc:Depends}, python3, python3-pyqt6, libmpv2 | libmpv1, python3-mpv
 Recommends: yt-dlp, fluid-soundfont-gm
 Description: Cross-platform bilingual (RO/EN) multimedia player
